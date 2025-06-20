@@ -1,6 +1,7 @@
 const maxCharacters = 260; // limit the number of characters
 const padding = 5
 const inputEle = document.querySelector('#input')
+const AI_select = document.querySelector('#ai-select')
 
 function limitCharacters(input) {
   if (input.value.length > maxCharacters) {
@@ -604,7 +605,7 @@ function generatePDF(obj, save = false) {
     if (check[0].projectName || check[0].projectLink || check[0].bullets) {
       doc.setFont('NotoSans', 'bold');
       doc.setFontSize(14);
-      // y += lineHeight;
+      y += padding;
       doc.text("Projects", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -703,7 +704,7 @@ function generatePDF(obj, save = false) {
     if (obj.educations[0].university || obj.educations[0].degree || obj.educations[0].gpa || obj.educations[0].graduationDate) {
       doc.setFont('NotoSans', 'bold');
       doc.setFontSize(14);
-      // y += lineHeight;
+      y += padding;
       doc.text("Education", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -957,7 +958,7 @@ Your output must be a JSON following the schema below:
 "company": "",
 "location": "",
 "dates": "",
-"bullets": ""
+"bullets": []
 }],
 "educations": [{
 "university": "",
@@ -968,7 +969,7 @@ Your output must be a JSON following the schema below:
 "projects": [{
 "projectName": "",
 "projectLink": "",
-"bullets": ""
+"bullets": []
 }],
 "skills": [{
 "skill": "",
@@ -1030,7 +1031,7 @@ Example Output JSON (with placeholders):
 "company": "",
 "location": "",
 "dates": "",
-"bullets": ""
+"bullets": []
 }],
 "educations": [{
 "university": "",
@@ -1041,7 +1042,7 @@ Example Output JSON (with placeholders):
 "projects": [{
 "projectName": "",
 "projectLink": "",
-"bullets": ""
+"bullets": []
 }],
 "skills": [{
 "skill": "",
@@ -1070,7 +1071,7 @@ async function generateAI() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        "model": "openai-large",
+        "model": `openai-large`,
         "response_format": {
           "type": "json_object"
         },
@@ -1106,3 +1107,19 @@ async function generateAI() {
   catch (err) { console.log(err), error.innerText = err }
   finally { aiLoader.classList.replace('flex', 'hidden'); }
 }
+
+// async function fetchModels() {
+//   const res = await fetch('https://text.pollinations.ai/models');
+//   const data = await res.json();
+//   // console.log(data);
+//   for (let model of data) {
+//     if (model.output_modalities[0] !== 'text')
+//       continue; // Skip models that do not output text
+//     const option = document.createElement('option');
+//     option.value = model.name;
+//     option.innerText = model.description;
+//     AI_select.appendChild(option);
+//   }
+// }
+
+// fetchModels();
