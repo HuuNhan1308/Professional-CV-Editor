@@ -142,7 +142,7 @@ function addExperience() {
   newEntry.innerHTML = `
       <input type="text" placeholder="Position" class="w-full p-2 border rounded">
       <input type="text" placeholder="Company" class="w-full p-2 border rounded mt-2">
-      <input type="text" placeholder="Location" class="w-full p-2 border rounded mt-2">
+      <input type="text" placeholder="Location (optional)" class="w-full p-2 border rounded mt-2">
       <input type="text" placeholder="Dates" class="w-full p-2 border rounded mt-2">
       <textarea placeholder="Bullet points (one per line)" class="w-full p-2 border rounded mt-2 h-24"></textarea>
       <button onclick="deleteBlock(this, 'experience-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
@@ -174,7 +174,7 @@ function addProject() {
   newEntry.className = 'project-entry';
   newEntry.innerHTML = `
       <input type="text" placeholder="Project Name" class="w-full p-2 border rounded">
-      <input type="text" placeholder="Link" class="w-full p-2 border rounded mt-2">
+      <input type="text" placeholder="Link (optional)" class="w-full p-2 border rounded mt-2">
       <textarea placeholder="Bullet points (one per line)" class="w-full p-2 border rounded mt-2 h-24"></textarea>
       <button onclick="deleteBlock(this, 'project-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
         Delete
@@ -313,6 +313,7 @@ function generatePDF(obj, save = false) {
   let marginRight = doc.internal.pageSize.getWidth() - 40;
   let marginBottom = doc.internal.pageSize.getHeight() - 40;
   let marginTop = 40
+  console.log('doc', doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight())
   // const obj = getObject()
 
   const language = document.getElementById('language').value;
@@ -553,8 +554,6 @@ function generatePDF(obj, save = false) {
 
         doc.setFontSize(10);
         let temp = position ? `**${position.trim()}**` : ''
-        temp += temp && company ? `, ${company.trim()}` : company ? `${company.trim()}` : '';
-        temp += temp && location ? ` - **${location.trim()}**` : location ? `**${location.trim()}**` : '';
         let startX = marginLeft;
         temp.split('**').forEach((line, index) => {
           doc.setFont('NotoSans', 'bold');
@@ -568,6 +567,13 @@ function generatePDF(obj, save = false) {
         y += lineHeight;
         checkAndAddPage()
 
+        // company and location
+        temp = company ? `${company.trim()}` : '';
+        temp += temp && location ? ` - ${location.trim()}` : location ? `${location.trim()}` : '';
+        doc.text(temp, marginLeft, y);
+        y += lineHeight;
+        checkAndAddPage()
+
         doc.setFont('NotoSans', 'normal');
         bullets.forEach((bullet, index) => {
           if (bullet.trim()) {
@@ -577,18 +583,16 @@ function generatePDF(obj, save = false) {
                 doc.text("•      " + bulletLines[line], marginLeft, y);
               else
                 doc.text("        " + bulletLines[line], marginLeft, y);
-              if (index != bullets.length - 1) {
+              if (index != bullets.length) {
                 y += lineHeight;
                 checkAndAddPage()
               }
             }
           }
         });
-        if (index != experienceEntries.length - 1)
-          y += lineHeight
-        else
-          y += padding
-        checkAndAddPage()
+        // if (index != experienceEntries.length - 1)
+        //   y += lineHeight
+        // checkAndAddPage()
       })
     }
   }
@@ -600,7 +604,7 @@ function generatePDF(obj, save = false) {
     if (check[0].projectName || check[0].projectLink || check[0].bullets) {
       doc.setFont('NotoSans', 'bold');
       doc.setFontSize(14);
-      y += lineHeight;
+      // y += lineHeight;
       doc.text("Projects", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -617,21 +621,55 @@ function generatePDF(obj, save = false) {
         const bullets = entry.bullets.split('\n');
         doc.setFont('NotoSans', 'bold');
         doc.setFontSize(10);
-        doc.text(projectName, marginLeft, y);
-        doc.setFont('NotoSans', 'normal');
-        if (projectLink.includes('https://') || projectLink.includes('www.')) {
-          doc.setTextColor('#115bca')
-          doc.setDrawColor('#115bca')
-          doc.textWithLink(projectLink, marginRight, y, { align: 'right' });
-          const textWidth = doc.getStringUnitWidth(projectLink) * 10;
-          doc.line(marginRight - textWidth, y, marginRight, y);
-          doc.setTextColor('#000000')
-          doc.setDrawColor('#000000')
+        const projectNameLines = doc.splitTextToSize(projectName.trim(), 520);
+        for (line in projectNameLines) {
+          doc.text(projectNameLines[line], marginLeft, y);
+          if (line != projectNameLines.length - 1) {
+            y += lineHeight;
+            checkAndAddPage()
+          }
         }
-        else
-          doc.text(projectLink, marginRight, y, { align: 'right' });
-        y += lineHeight;
-        checkAndAddPage()
+
+        if (projectLink.trim()) {
+          doc.setFont('NotoSans', 'normal');
+          if (projectLink.includes('https://') || projectLink.includes('www.')) {
+            y += lineHeight;
+            checkAndAddPage()
+            doc.setTextColor('#115bca')
+            doc.setDrawColor('#115bca')
+            const projectLinkLines = doc.splitTextToSize(projectLink.trim(), 520);
+            for (line in projectLinkLines) {
+              doc.textWithLink(projectLinkLines[line], marginLeft, y, { align: 'left' });
+              const textWidth = doc.getStringUnitWidth(projectLinkLines[line]) * 10;
+              doc.line(marginLeft, y, marginLeft + textWidth, y);
+              if (line != projectLinkLines.length - 1) {
+                y += lineHeight;
+                checkAndAddPage()
+              }
+            }
+            doc.setTextColor('#000000')
+            doc.setDrawColor('#000000')
+          }
+          else {
+            y += lineHeight;
+            checkAndAddPage()
+            const projectLinkLines = doc.splitTextToSize(projectLink.trim(), 520);
+            for (line in projectLinkLines) {
+              doc.text(projectLinkLines[line], marginLeft, y, { align: 'left' });
+              if (line != projectLinkLines.length - 1) {
+                y += lineHeight;
+                checkAndAddPage()
+              }
+            }
+          }
+          y += lineHeight;
+          checkAndAddPage()
+        }
+        else {
+          doc.setFont('NotoSans', 'normal');
+          y += lineHeight;
+          checkAndAddPage()
+        }
 
 
         bullets.forEach((bullet, index) => {
@@ -642,7 +680,7 @@ function generatePDF(obj, save = false) {
                 doc.text("•      " + bulletLines[line], marginLeft, y);
               else
                 doc.text("        " + bulletLines[line], marginLeft, y);
-              if (index != bullets.length - 1) {
+              if (index != bullets.length) {
                 y += lineHeight;
                 checkAndAddPage()
               }
@@ -650,11 +688,11 @@ function generatePDF(obj, save = false) {
           }
         });
 
-        if (index != projectEntries.length - 1)
-          y += lineHeight
-        else
-          y += padding
-        checkAndAddPage()
+        // if (index != projectEntries.length - 1)
+        //   y += lineHeight
+        // else
+        //   y += padding
+        // checkAndAddPage()
       });
     }
   }
@@ -665,7 +703,7 @@ function generatePDF(obj, save = false) {
     if (obj.educations[0].university || obj.educations[0].degree || obj.educations[0].gpa || obj.educations[0].graduationDate) {
       doc.setFont('NotoSans', 'bold');
       doc.setFontSize(14);
-      y += lineHeight;
+      // y += lineHeight;
       doc.text("Education", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -685,8 +723,8 @@ function generatePDF(obj, save = false) {
 
         doc.setFontSize(10);
         let temp = university ? `**${university.trim()}**` : ''
-        temp += temp && degree ? `| ${degree.trim()}` : degree ? `${degree.trim()}` : '';
-        temp += temp && gpa ? ` - GPA: ${gpa.trim()}` : gpa ? `GPA: ${gpa.trim()}` : '';
+        // temp += temp && degree ? `| ${degree.trim()}` : degree ? `${degree.trim()}` : '';
+        // temp += temp && gpa ? ` - GPA: ${gpa.trim()}` : gpa ? `GPA: ${gpa.trim()}` : '';
         let startX = marginLeft;
         temp.split('**').forEach((line, index) => {
           doc.setFont('NotoSans', 'bold');
@@ -699,12 +737,18 @@ function generatePDF(obj, save = false) {
 
         doc.setFont('NotoSans', 'normal');
         doc.text(graduationDate, marginRight, y, { align: 'right' });
-
-        if (index != educationEntries.length - 1)
-          y += lineHeight
-        else
-          y += lineHeight + padding
+        y += lineHeight
         checkAndAddPage()
+
+        // degree and gpa
+        temp = degree ? `${degree.trim()}` : '';
+        temp += temp && gpa ? ` - ${gpa.trim()}` : gpa ? `${gpa.trim()}` : '';
+        doc.text(temp, marginLeft, y);
+
+        if (index != educationEntries.length - 1) {
+          y += lineHeight
+          checkAndAddPage()
+        }
       });
     }
   }
