@@ -465,8 +465,9 @@ function generatePDF(obj, save = false) {
     doc.setFont('NotoSans', 'normal');
     doc.setFontSize(10);
     const summaryLines = doc.splitTextToSize(summary, 500);
+    doc.text(summary, marginLeft, y, {align: "justify", maxWidth: 500, lineHeightFactor: 1.5});
     for (line in summaryLines) {
-      doc.text(summaryLines[line], marginLeft, y);
+      // doc.text(summaryLines[line], marginLeft, y, {align: "justify", maxWidth: 500});
       y += lineHeight;
       if (line == summaryLines.length - 1)
         y += 5
