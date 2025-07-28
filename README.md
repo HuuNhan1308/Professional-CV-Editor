@@ -35,3 +35,17 @@ Professional-CV-Editor is a powerful tool designed to help engineering professio
 
 5. **Download**  
    Once you're satisfied with your resume, simply download it in your preferred format (PDF, DOCX, etc.) and apply for your dream job.
+
+### API Configuration
+
+This application uses OpenRouter AI for CV generation. To use the AI features:
+
+1. Visit [https://openrouter.ai/](https://openrouter.ai/) to create an account and obtain an API key
+2. Add your key in the code:
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer YOUR OPEN ROUTER KEY`
+        },
