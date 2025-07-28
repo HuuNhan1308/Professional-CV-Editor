@@ -1,3 +1,14 @@
+import {
+  handleImageUpload,
+  removeProfileImage,
+  addImageToPDF,
+  getImageBottomPosition,
+  loadImageFromData,
+  getImageData,
+  initializeImageHandler,
+  hasImage
+} from './imageHandler.js';
+
 const maxCharacters = 260; // limit the number of characters
 const padding = 5
 const inputEle = document.querySelector('#input')
@@ -126,6 +137,22 @@ function PersonalInfo2() {
   return data.join(' • ');
 }
 
+// Helper functions for PDF generation using object data
+function getPersonalInfoFromObj(obj) {
+  const data = [];
+  if (obj.location) data.push(obj.location);
+  if (obj.email) data.push(obj.email);
+  if (obj.linkedin) data.push(obj.linkedin);
+  return data.join(' • ');
+}
+
+function getPersonalInfo2FromObj(obj) {
+  const data = [];
+  if (obj.github) data.push(obj.github);
+  if (obj.website) data.push(obj.website);
+  return data.join(' • ');
+}
+
 function deleteBlock(btn, containerId) {
   const container = document.getElementById(containerId);
   // Count only the block entries (child elements)
@@ -146,7 +173,7 @@ function addExperience() {
       <input type="text" placeholder="Location (optional)" class="w-full p-2 border rounded mt-2">
       <input type="text" placeholder="Dates" class="w-full p-2 border rounded mt-2">
       <textarea placeholder="Bullet points (one per line)" class="w-full p-2 border rounded mt-2 h-24"></textarea>
-      <button onclick="deleteBlock(this, 'experience-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="experience-fields">
         Delete
       </button>
     `;
@@ -162,7 +189,7 @@ function addEducation() {
       <input type="text" placeholder="Degree" class="w-full p-2 border rounded">
       <input type="text" placeholder="GPA (optional)" class="w-full p-2 border rounded">
       <input type="text" placeholder="Graduation Date" class="w-full p-2 border rounded">
-      <button onclick="deleteBlock(this, 'education-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="education-fields">
         Delete
       </button>
     `;
@@ -177,7 +204,7 @@ function addProject() {
       <input type="text" placeholder="Project Name" class="w-full p-2 border rounded">
       <input type="text" placeholder="Link (optional)" class="w-full p-2 border rounded mt-2">
       <textarea placeholder="Bullet points (one per line)" class="w-full p-2 border rounded mt-2 h-24"></textarea>
-      <button onclick="deleteBlock(this, 'project-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="project-fields">
         Delete
       </button>
     `;
@@ -191,7 +218,7 @@ function addSkill() {
   newEntry.innerHTML = `
       <input type="text" placeholder="Skill Name" class="w-full p-2 border rounded">
       <input type="text" placeholder="Description" class="w-full p-2 border rounded">
-      <button onclick="deleteBlock(this, 'skills-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="skills-fields">
         Delete
       </button>
     `;
@@ -277,7 +304,10 @@ function getObject() {
     const graduationDate = fields[3].value;
     return { university, degree, gpa, graduationDate };
   });
-  const obj = { name, email, location, linkedin, github, website, summary, experiences, projects, skills, educations }
+  // Get image data from ImageHandler module
+  const imageData = getImageData();
+  
+  const obj = { name, email, location, linkedin, github, website, summary, experiences, projects, skills, educations, ...imageData }
   console.log('get object', obj)
   return obj
 }
@@ -351,25 +381,33 @@ function generatePDF(obj, save = false) {
     }
   }
 
-  // Personal Information
+  // Add profile image if available - treated as absolute positioned element
+  let headerStartY = y; // Save starting position for header
+  
+  // Use ImageHandler module to add image to PDF
+  const imageInfo = addImageToPDF(doc, marginLeft, y);
+  const imageWidth = imageInfo.width;
+  const imageHeight = imageInfo.height;
+
+  // Personal Information - always centered on full page width (ignore image)
   doc.setFont('NotoSans', 'bold');
   doc.setFontSize(16);
-  // const name = document.getElementById('name').value;
   const name = obj.name
+  
+  // Always center on full page width
   doc.text(name || "Your Name", midPage, y, { align: 'center' });
-  y += lineHeight + padding;
+  
+  // Move to next line for personal info
+  let personalInfoY = y + lineHeight + padding;
 
   doc.setFont('NotoSans', 'normal');
   doc.setFontSize(10);
-  const personalInfo = PersonalInfo();
-  const personalInfo2 = PersonalInfo2();
+  const personalInfo = getPersonalInfoFromObj(obj);
+  const personalInfo2 = getPersonalInfo2FromObj(obj);
+  
+  // Personal info always centered on full page width (ignore image)
   if (personalInfo) {
     const fullLength = doc.getStringUnitWidth(personalInfo) * 10;
-    // let location = document.getElementById('location').value
-    // let email = document.getElementById('email').value
-    // let linkedin = document.getElementById('linkedin').value
-    // let github = document.getElementById('github').value
-    // let website = document.getElementById('website').value
 
     let location = obj.location
     let email = obj.email
@@ -381,13 +419,13 @@ function generatePDF(obj, save = false) {
     let content = location ? `${location}` : '';
     let temp = location ? `${location}` : '';
     let tempLength = doc.getStringUnitWidth(temp) * 10;
-    doc.text(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+    doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
     // email
     content = temp && email ? ` • ${email}` : email ? `${email}` : '';
     temp += temp && email ? ` • ${email}` : email ? `${email}` : '';
     tempLength = doc.getStringUnitWidth(temp) * 10;
-    doc.text(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+    doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
     // linkedin
     content = temp && linkedin ? ` • ${linkedin}` : linkedin ? `${linkedin}` : '';
@@ -396,18 +434,18 @@ function generatePDF(obj, save = false) {
     if (content.includes('https://') || content.includes('www.')) {
       doc.setTextColor('#115bca')
       doc.setDrawColor('#115bca')
-      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
       const textWidth = doc.getStringUnitWidth(linkedin) * 10;
-      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, y, midPage - (fullLength / 2 - tempLength), y);
+      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, personalInfoY, midPage - (fullLength / 2 - tempLength), personalInfoY);
       doc.setTextColor('#000000')
       doc.setDrawColor('#000000')
     }
     else
-      doc.text(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
     console.log(fullLength - tempLength, fullLength, tempLength)
 
-    y += lineHeight + padding;
+    personalInfoY += lineHeight + padding;
   }
 
   if (personalInfo2) {
@@ -423,14 +461,14 @@ function generatePDF(obj, save = false) {
     if (content.includes('https://') || content.includes('www.')) {
       doc.setTextColor('#115bca')
       doc.setDrawColor('#115bca')
-      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
       const textWidth = doc.getStringUnitWidth(github) * 10;
-      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, y, midPage - (fullLength / 2 - tempLength), y);
+      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, personalInfoY, midPage - (fullLength / 2 - tempLength), personalInfoY);
       doc.setTextColor('#000000')
       doc.setDrawColor('#000000')
     }
     else
-      doc.text(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
     // website
     content = temp && website ? ` • ${website}` : website ? `${website}` : '';
@@ -439,16 +477,29 @@ function generatePDF(obj, save = false) {
     if (content.includes('https://') || content.includes('www.')) {
       doc.setTextColor('#115bca')
       doc.setDrawColor('#115bca')
-      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
       const textWidth = doc.getStringUnitWidth(website) * 10;
-      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, y, midPage - (fullLength / 2 - tempLength), y);
+      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, personalInfoY, midPage - (fullLength / 2 - tempLength), personalInfoY);
       doc.setTextColor('#000000')
       doc.setDrawColor('#000000')
     }
     else
-      doc.text(content, midPage - (fullLength / 2 - tempLength), y, { align: 'right' });
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
-    y += lineHeight + padding;
+    personalInfoY += lineHeight + padding;
+  }
+  
+  // If no personal info was displayed, set personalInfoY to continue from name
+  if (!personalInfo && !personalInfo2) {
+    personalInfoY = headerStartY + lineHeight + padding;
+  }
+  
+  // Set y position to continue below the header (image + personal info)
+  if (hasImage()) {
+    const imageBottom = getImageBottomPosition(headerStartY, imageHeight, padding);
+    y = Math.max(personalInfoY, imageBottom);
+  } else {
+    y = personalInfoY;
   }
 
   // Summary
@@ -466,10 +517,10 @@ function generatePDF(obj, save = false) {
     doc.setFontSize(10);
     const summaryLines = doc.splitTextToSize(summary, 500);
     doc.text(summary, marginLeft, y, {align: "justify", maxWidth: 500, lineHeightFactor: 1.5});
-    for (line in summaryLines) {
-      // doc.text(summaryLines[line], marginLeft, y, {align: "justify", maxWidth: 500});
+    for (let i = 0; i < summaryLines.length; i++) {
+      // doc.text(summaryLines[i], marginLeft, y, {align: "justify", maxWidth: 500});
       y += lineHeight;
-      if (line == summaryLines.length - 1)
+      if (i == summaryLines.length - 1)
         y += 5
       checkAndAddPage()
     }
@@ -505,7 +556,7 @@ function generatePDF(obj, save = false) {
           }
           const tempLines = doc.splitTextToSize(line.trim(), 500 - doc.getStringUnitWidth(skill.trim()) * 10);
           // console.log(tempLines)
-          for (let bline in tempLines) {
+          for (let bline = 0; bline < tempLines.length; bline++) {
             doc.text(tempLines[bline], startX, y);
             if (bline == 0 && tempLines.length == 1)
               startX = startX + doc.getStringUnitWidth(tempLines[bline]) * 10;
@@ -580,11 +631,11 @@ function generatePDF(obj, save = false) {
         bullets.forEach((bullet, index) => {
           if (bullet.trim()) {
             const bulletLines = doc.splitTextToSize(bullet.trim(), 500);
-            for (line in bulletLines) {
-              if (line == 0)
-                doc.text("•      " + bulletLines[line], marginLeft, y);
+            for (let i = 0; i < bulletLines.length; i++) {
+              if (i == 0)
+                doc.text("•      " + bulletLines[i], marginLeft, y);
               else
-                doc.text("        " + bulletLines[line], marginLeft, y);
+                doc.text("        " + bulletLines[i], marginLeft, y);
               if (index != bullets.length) {
                 y += lineHeight;
                 checkAndAddPage()
@@ -624,9 +675,9 @@ function generatePDF(obj, save = false) {
         doc.setFont('NotoSans', 'bold');
         doc.setFontSize(10);
         const projectNameLines = doc.splitTextToSize(projectName.trim(), 520);
-        for (line in projectNameLines) {
-          doc.text(projectNameLines[line], marginLeft, y);
-          if (line != projectNameLines.length - 1) {
+        for (let i = 0; i < projectNameLines.length; i++) {
+          doc.text(projectNameLines[i], marginLeft, y);
+          if (i != projectNameLines.length - 1) {
             y += lineHeight;
             checkAndAddPage()
           }
@@ -640,11 +691,11 @@ function generatePDF(obj, save = false) {
             doc.setTextColor('#115bca')
             doc.setDrawColor('#115bca')
             const projectLinkLines = doc.splitTextToSize(projectLink.trim(), 520);
-            for (line in projectLinkLines) {
-              doc.textWithLink(projectLinkLines[line], marginLeft, y, { align: 'left' });
-              const textWidth = doc.getStringUnitWidth(projectLinkLines[line]) * 10;
+            for (let i = 0; i < projectLinkLines.length; i++) {
+              doc.textWithLink(projectLinkLines[i], marginLeft, y, { align: 'left' });
+              const textWidth = doc.getStringUnitWidth(projectLinkLines[i]) * 10;
               doc.line(marginLeft, y, marginLeft + textWidth, y);
-              if (line != projectLinkLines.length - 1) {
+              if (i != projectLinkLines.length - 1) {
                 y += lineHeight;
                 checkAndAddPage()
               }
@@ -656,9 +707,9 @@ function generatePDF(obj, save = false) {
             y += lineHeight;
             checkAndAddPage()
             const projectLinkLines = doc.splitTextToSize(projectLink.trim(), 520);
-            for (line in projectLinkLines) {
-              doc.text(projectLinkLines[line], marginLeft, y, { align: 'left' });
-              if (line != projectLinkLines.length - 1) {
+            for (let i = 0; i < projectLinkLines.length; i++) {
+              doc.text(projectLinkLines[i], marginLeft, y, { align: 'left' });
+              if (i != projectLinkLines.length - 1) {
                 y += lineHeight;
                 checkAndAddPage()
               }
@@ -677,11 +728,11 @@ function generatePDF(obj, save = false) {
         bullets.forEach((bullet, index) => {
           if (bullet.trim()) {
             const bulletLines = doc.splitTextToSize(bullet.trim(), 500);
-            for (line in bulletLines) {
-              if (line == 0)
-                doc.text("•      " + bulletLines[line], marginLeft, y);
+            for (let i = 0; i < bulletLines.length; i++) {
+              if (i == 0)
+                doc.text("•      " + bulletLines[i], marginLeft, y);
               else
-                doc.text("        " + bulletLines[line], marginLeft, y);
+                doc.text("        " + bulletLines[i], marginLeft, y);
               if (index != bullets.length) {
                 y += lineHeight;
                 checkAndAddPage()
@@ -779,6 +830,9 @@ function loadHtml(obj) {
   document.getElementById('github').value = obj.github;
   document.getElementById('website').value = obj.website;
   document.getElementById('summary').value = obj.summary;
+  
+  // Load profile image using ImageHandler module
+  loadImageFromData(obj);
 
   // Delete all existing skill entries
   const skillEntries = document.querySelectorAll('.skills-entry');
@@ -800,7 +854,7 @@ function loadHtml(obj) {
       newEntry.innerHTML = `
           <input type="text" placeholder="Skill Name" class="w-full p-2 border rounded" value="${skill.skill}">
           <input type="text" placeholder="Description" class="w-full p-2 border rounded" value="${skill.description}">
-          <button onclick="deleteBlock(this, 'skills-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+          <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="skills-fields">
             Delete
           </button>
         `;
@@ -834,7 +888,7 @@ function loadHtml(obj) {
           <input type="text" placeholder="Location" class="w-full p-2 border rounded mt-2" value="${exp.location}">
           <input type="text" placeholder="Dates" class="w-full p-2 border rounded mt-2" value="${exp.dates}">
           <textarea placeholder="Bullet points (one per line)" class="w-full p-2 border rounded mt-2 h-24" value="${exp.bullets}">${exp.bullets}</textarea>
-          <button onclick="deleteBlock(this, 'experience-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+          <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="experience-fields">
             Delete
           </button>
         `;
@@ -864,7 +918,7 @@ function loadHtml(obj) {
       <input type="text" placeholder="Project Name" class="w-full p-2 border rounded" value="${proj.projectName}">
       <input type="text" placeholder="Link" class="w-full p-2 border rounded mt-2" value="${proj.projectLink}">
       <textarea placeholder="Bullet points (one per line)" class="w-full p-2 border rounded mt-2 h-24" value="${proj.bullets}">${proj.bullets}</textarea>
-      <button onclick="deleteBlock(this, 'project-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="project-fields">
         Delete
       </button>
     `;
@@ -896,13 +950,16 @@ function loadHtml(obj) {
       <input type="text" placeholder="Degree" class="w-full p-2 border rounded" value="${edu.degree}">
       <input type="text" placeholder="GPA (optional)" class="w-full p-2 border rounded" value="${edu.gpa}">
       <input type="text" placeholder="Graduation Date" class="w-full p-2 border rounded" value="${edu.graduationDate}">
-      <button onclick="deleteBlock(this, 'education-fields')" class="btn btn-error text-white px-2 py-1 rounded mt-2">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="education-fields">
         Delete
       </button>
     `;
       document.getElementById('education-fields').appendChild(newEntry);
     }
   })
+  
+  // Update preview after loading data
+  AutoUpdate();
 }
 
 inputEle.onchange = async function () {
@@ -916,8 +973,8 @@ inputEle.onchange = async function () {
     return
   }
   const obj = JSON.parse(await inputEle.files[0].text())
-  generatePDF(obj)
   loadHtml(obj)
+  // generatePDF will be called by AutoUpdate in loadHtml
   console.log(obj)
 }
 
@@ -932,6 +989,35 @@ radios[1].addEventListener('change', () => {
   document.querySelector('#ai-editor').classList.remove('hidden')
   document.querySelector('#cv-editor').classList.add('hidden')
 })
+
+// Initialize image handler
+initializeImageHandler();
+
+// Initialize all event listeners for buttons
+function initializeEventListeners() {
+  // Main action buttons
+  document.getElementById('update-btn')?.addEventListener('click', AutoUpdate);
+  document.getElementById('download-pdf-btn')?.addEventListener('click', downloadPDF);
+  document.getElementById('download-json-btn')?.addEventListener('click', downloadJson);
+  document.getElementById('generate-ai-btn')?.addEventListener('click', generateAI);
+  
+  // Add section buttons
+  document.getElementById('add-skill-btn')?.addEventListener('click', addSkill);
+  document.getElementById('add-experience-btn')?.addEventListener('click', addExperience);
+  document.getElementById('add-project-btn')?.addEventListener('click', addProject);
+  document.getElementById('add-education-btn')?.addEventListener('click', addEducation);
+  
+  // Delete buttons event delegation
+  document.body.addEventListener('click', function(e) {
+    if (e.target.classList.contains('delete-btn')) {
+      const container = e.target.getAttribute('data-container');
+      deleteBlock(e.target, container);
+    }
+  });
+}
+
+// Initialize event listeners when DOM is loaded
+initializeEventListeners();
 
 const INSprompt = `Instruction Prompt:
 
@@ -1066,21 +1152,22 @@ async function generateAI() {
   }
   try {
     aiLoader.classList.replace('hidden', 'flex');
-    const res = await fetch('https://text.pollinations.ai', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer LOOK FOR KEY IN key.txt`
       },
       body: JSON.stringify({
-        "model": `openai`,
+        "model": `deepseek/deepseek-chat-v3-0324:free`,
         "response_format": {
           "type": "json_object"
         },
-        "private": true,
-        "reasoning_effort": "medium",
+        // "private": true,
+        // "reasoning_effort": "medium",
         "messages": [
           {
-            "role": "developer",
+            "role": "system",
             "content": INSprompt
           },
           {
@@ -1094,16 +1181,27 @@ async function generateAI() {
         ],
       })
     })
-    const json = await res.json()
+    const json = await res.json().then(res => JSON.parse(res.choices[0].message.content))
+    // console.log(typeof(json))
     json.experiences.map((value, index) => {
+      // let ex_temp = ''
+      // json.experiences[index]['bullets'].map((value2, index2) => {
+      //   ex_temp += value2 + '\n'
+      // })
+      // json.experiences[index]['bullets'] = ex_temp
       json.experiences[index]['bullets'] = json.experiences[index]['bullets'].join('\n')
     })
     json.projects.map((value, index) => {
+      // let pr_temp = ''
+      // json.projects[index]['bullets'].map((value2, index2) => {
+      //   pr_temp += value2 + '\n'
+      // })
+      // json.projects[index]['bullets'] = pr_temp
       json.projects[index]['bullets'] = json.projects[index]['bullets'].join('\n')
     })
     console.log(json)
     loadHtml(json)
-    generatePDF(json)
+    // generatePDF will be called by AutoUpdate in loadHtml
   }
   catch (err) { console.log(err), error.innerText = err }
   finally { aiLoader.classList.replace('flex', 'hidden'); }
