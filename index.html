@@ -176,33 +176,35 @@
           <p id="AI-error" class="text-red-500"></p>
         </div>
       </div>
+
+      <!-- CV Preview -->
+      <div class="bg-base-200 p-6 rounded-lg shadow-md overflow-auto flex flex-col h-[calc(100vh-64px)] gap-5">
+        <div id="cv-preview" class="display-none">
+          <!-- Preview content will be generated here -->
+        </div>
+        <object class="w-full h-full m-0 p-0 flex-1" id="pdf-embed" type="application/pdf"></object>
+        <div class="flex flex-row gap-5 flex-wrap">
+          <button id="update-btn" class="btn bg-emerald-50 text-emerald-500">Update</button>
+          <button id="download-pdf-btn" class="btn bg-blue-50 text-blue-500">Download File</button>
+          <button id="download-json-btn" class="btn bg-orange-50 text-orange-500">Save File</button>
+          <fieldset class="">
+            <div class="flex flex-row gap-1">
+              <label class="fieldset-label btn bg-yellow-50 text-yellow-500 relative">
+                Load File
+                <input type="file" class="file-input file-input-warning opacity-0 absolute inset-0" id="input"
+                  accept=".json" />
+              </label>
+              <label class="fieldset-label err text-error"></label>
+            </div>
+          </fieldset>
+        </div>
+      </div>
     </div>
 
+    
   </div>
 
-    <!-- CV Preview -->
-    <div class="bg-base-200 p-6 rounded-lg shadow-md overflow-auto flex flex-col h-[calc(100vh-64px)] gap-5">
-      <div id="cv-preview" class="display-none">
-        <!-- Preview content will be generated here -->
-      </div>
-      <object class="w-full h-full m-0 p-0 flex-1" id="pdf-embed" type="application/pdf"></object>
-      <div class="flex flex-row gap-5 flex-wrap">
-        <button id="update-btn" class="btn bg-emerald-50 text-emerald-500">Update</button>
-        <button id="download-pdf-btn" class="btn bg-blue-50 text-blue-500">Download File</button>
-        <button id="download-json-btn" class="btn bg-orange-50 text-orange-500">Save File</button>
-        <fieldset class="">
-          <div class="flex flex-row gap-1">
-            <label class="fieldset-label btn bg-yellow-50 text-yellow-500 relative">
-              Load File
-              <input type="file" class="file-input file-input-warning opacity-0 absolute inset-0" id="input"
-                accept=".json" />
-            </label>
-            <label class="fieldset-label err text-error"></label>
-          </div>
-        </fieldset>
-
-      </div>
-    </div>
+    
 
   <script src="./script/EBGaramond-Bold-normal.js"></script>
   <script src="./script/EBGaramond-Regular-normal.js"></script>
