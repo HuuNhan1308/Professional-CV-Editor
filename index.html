@@ -33,6 +33,7 @@
             <option>Vietnamese</option>
             <option>Japanese</option>
             <option>Korean</option>
+            <option>Chinese</option>
             <option>Spanish</option>
             <option>French</option>
           </select>
@@ -48,10 +49,19 @@
               <input type="text" id="name" placeholder="Full Name" class="w-full p-2 border rounded" />
               <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded" />
               <input type="text" id="location" placeholder="Location (optional)" class="w-full p-2 border rounded" />
-              <input type="text" id="linkedin" placeholder="LinkedIn URL (optional)" class="w-full p-2 border rounded" />
-              <input type="text" id="github" placeholder="GitHub URL (optional)" class="w-full p-2 border rounded" />
-              <input type="text" id="website" placeholder="Personal Website (optional)"
-                class="w-full p-2 border rounded" />
+              <div class="flex flex-row gap-4">
+                <input type="text" id="linkedin_placeholder" placeholder="Linkedin placeholder (optional)" class="w-full p-2 border rounded" />
+                <input type="text" id="linkedin" placeholder="LinkedIn URL (optional)" class="w-full p-2 border rounded" />
+              </div>
+              <div class="flex flex-row gap-4">
+                 <input type="text" id="github_placeholder" placeholder="GitHub placeholder (optional)" class="w-full p-2 border rounded" />
+                 <input type="text" id="github" placeholder="GitHub URL (optional)" class="w-full p-2 border rounded" />
+              </div>
+             <div class="flex flex-row gap-4">
+                  <input type="text" id="website_placeholder" placeholder="Website placeholder (optional)" class="w-full p-2 border rounded" />
+                  <input type="text" id="website" placeholder="Personal Website (optional)" class="w-full p-2 border rounded" />
+             </div>
+
               
               <!-- Profile Picture Upload -->
               <div class="space-y-2">
@@ -213,6 +223,8 @@
   <script src="./script/NotoSansJP-Regular-normal.js"></script>
   <script src="./script/NotoSansKR-Bold-normal.js"></script>
   <script src="./script/NotoSansKR-Regular-normal.js"></script>
+  <script src="./script/NotoSansSC-Regular-normal.js"></script>
+  <script src="./script/NotoSansSC-Bold-normal.js"></script>
 </body>
 
 </html>

@@ -96,12 +96,12 @@ export function addImageToPDF(doc, marginLeft, y) {
   
   if (profileImageData) {
     try {
-      const imgSize = 80; // Fixed size for profile image
+      const imgSize = 70; // Fixed size for profile image
       imageWidth = imgSize;
       imageHeight = imgSize;
       
       // Place image at top left with margin - higher up
-      doc.addImage(profileImageData, profileImageType || 'JPEG', marginLeft, y - 30, imageWidth, imageHeight);
+      doc.addImage(profileImageData, profileImageType || 'JPEG', marginLeft, y - 28, imageWidth, imageHeight);
     } catch (error) {
       console.error('Error adding image to PDF:', error);
     }

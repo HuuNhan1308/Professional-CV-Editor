@@ -85,34 +85,31 @@ function updatePreview() {
   preview.innerHTML = `
       <!-- Personal Info -->
       <div class="text-center">
-          <h1 class="text-3xl font-bold">${
-            document.getElementById("name").value
-          }</h1>
+          <h1 class="text-3xl font-bold">${document.getElementById("name").value
+    }</h1>
           <div class="flex flex-wrap justify-center gap-2 mt-2 text-gray-600">
               ${PersonalInfo()}
           </div>
       </div>
   
       <!-- Summary -->
-      ${
-        document.getElementById("summary").value
-          ? `
+      ${document.getElementById("summary").value
+      ? `
       <div>
           <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Summary</h2>
-          <p class="text-gray-700 break-words">${
-            document.getElementById("summary").value
-          }</p>
+          <p class="text-gray-700 break-words">${document.getElementById("summary").value
+      }</p>
       </div>`
-          : ""
-      }
+      : ""
+    }
   
       <!-- Experience -->
       <div>
           <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Experience</h2>
           ${Array.from(document.querySelectorAll(".experience-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input, textarea");
-              return `
+      .map((entry) => {
+        const fields = entry.querySelectorAll("input, textarea");
+        return `
               <div>
                   <div class="flex justify-between">
                       <h3 class="font-semibold">${fields[0].value}</h3>
@@ -124,25 +121,25 @@ function updatePreview() {
                   </div>
                   <ul class="list-disc ml-6 mt-2">
                       ${fields[4].value
-                        .split("\n")
-                        .map(
-                          (point) => `<li class="text-gray-700">${point}</li>`
-                        )
-                        .join("")}
+            .split("\n")
+            .map(
+              (point) => `<li class="text-gray-700">${point}</li>`
+            )
+            .join("")}
                   </ul>
               </div>
             `;
-            })
-            .join("")}
+      })
+      .join("")}
       </div>
   
       <!-- Projects -->
       <div>
           <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Projects</h2>
           ${Array.from(document.querySelectorAll(".project-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input, textarea");
-              return `
+      .map((entry) => {
+        const fields = entry.querySelectorAll("input, textarea");
+        return `
               <div>
                   <div class="flex justify-between">
                       <h3 class="font-semibold">${fields[0].value}</h3>
@@ -150,25 +147,25 @@ function updatePreview() {
                   </div>
                   <ul class="list-disc ml-6 mt-2">
                       ${fields[2].value
-                        .split("\n")
-                        .map(
-                          (point) => `<li class="text-gray-700">${point}</li>`
-                        )
-                        .join("")}
+            .split("\n")
+            .map(
+              (point) => `<li class="text-gray-700">${point}</li>`
+            )
+            .join("")}
                   </ul>
               </div>
             `;
-            })
-            .join("")}
+      })
+      .join("")}
       </div>
   
       <!-- Education -->
       <div>
           <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Education</h2>
           ${Array.from(document.querySelectorAll(".education-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input");
-              return `
+      .map((entry) => {
+        const fields = entry.querySelectorAll("input");
+        return `
               <div class="flex justify-between">
                   <div>
                       <h3 class="font-semibold">${fields[0].value}</h3>
@@ -176,32 +173,31 @@ function updatePreview() {
                   </div>
                   <div class="text-right">
                       <p class="text-gray-600">${fields[3].value}</p>
-                      ${
-                        fields[2].value
-                          ? `<p class="text-gray-600">GPA: ${fields[2].value}</p>`
-                          : ""
-                      }
+                      ${fields[2].value
+            ? `<p class="text-gray-600">GPA: ${fields[2].value}</p>`
+            : ""
+          }
                   </div>
               </div>
             `;
-            })
-            .join("")}
+      })
+      .join("")}
       </div>
   
       <!-- Skills -->
       <div>
           <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Skills</h2>
           ${Array.from(document.querySelectorAll(".skills-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input");
-              return `
+      .map((entry) => {
+        const fields = entry.querySelectorAll("input");
+        return `
               <div class="flex flex-row">
                   <p class="font-semibold">${fields[0].value}</p>
                   <p class="text-gray-600">: ${fields[1].value}</p>
               </div>
             `;
-            })
-            .join("")}
+      })
+      .join("")}
       </div>
     `;
 }
@@ -231,14 +227,32 @@ function getPersonalInfoFromObj(obj) {
   const data = [];
   if (obj.location) data.push(obj.location);
   if (obj.email) data.push(obj.email);
-  if (obj.linkedin) data.push(obj.linkedin);
+  if (obj.linkedin || obj.linkedin_placeholder) {
+    if (obj.linkedin_placeholder) {
+      data.push(obj.linkedin_placeholder);
+    } else if (obj.linkedin) {
+      data.push(obj.linkedin);
+    }
+  }
   return data.join(" • ");
 }
 
 function getPersonalInfo2FromObj(obj) {
   const data = [];
-  if (obj.github) data.push(obj.github);
-  if (obj.website) data.push(obj.website);
+  if (obj.github || obj.github_placeholder) {
+    if (obj.github_placeholder) {
+      data.push(obj.github_placeholder);
+    } else if (obj.github) {
+      data.push(obj.github);
+    }
+  }
+  if (obj.website || obj.website_placeholder) {
+    if (obj.website_placeholder) {
+      data.push(obj.website_placeholder);
+    } else if (obj.website) {
+      data.push(obj.website);
+    }
+  }
   return data.join(" • ");
 }
 
@@ -327,8 +341,11 @@ function getObject() {
   const email = document.getElementById("email")?.value;
   const location = document.getElementById("location")?.value;
   const linkedin = document.getElementById("linkedin")?.value;
+  const linkedin_placeholder = document.getElementById("linkedin_placeholder")?.value;
   const github = document.getElementById("github")?.value;
+  const github_placeholder = document.getElementById("github_placeholder")?.value;
   const website = document.getElementById("website")?.value;
+  const website_placeholder = document.getElementById("website_placeholder")?.value;
   const summary = document.getElementById("summary")?.value;
   const experiences = Array.from(
     document.querySelectorAll(".experience-entry")
@@ -379,8 +396,11 @@ function getObject() {
       email,
       location,
       linkedin,
+      linkedin_placeholder,
       github,
+      github_placeholder,
       website,
+      website_placeholder,
       summary,
       experiences,
       projects,
@@ -440,6 +460,9 @@ function generatePDF(obj, save = false) {
   } else if (language == "Korean") {
     doc.addFileToVFS("NotoSans-normal.ttf", KrRegular);
     doc.addFileToVFS("NotoSans-bold.ttf", KrBold);
+  } else if (language == "Chinese") {
+    doc.addFileToVFS("NotoSans-normal.ttf", RegCN);
+    doc.addFileToVFS("NotoSans-bold.ttf", BoldCN);
   } else {
     doc.addFileToVFS("NotoSans-normal.ttf", font);
     doc.addFileToVFS("NotoSans-bold.ttf", fontBold);
@@ -465,6 +488,18 @@ function generatePDF(obj, save = false) {
     }
   }
 
+  // information string function
+  function formatOutput(temp, placeholder, link) {
+    if (temp) {
+      if (placeholder) return ` • ${placeholder}`;
+      if (link) return ` • ${link}`;
+    } else {
+      if (placeholder) return `${placeholder}`;
+      if (link) return `${link}`;
+    }
+    return "";
+  }
+
   // Add profile image if available - treated as absolute positioned element
   let headerStartY = y; // Save starting position for header
 
@@ -472,152 +507,295 @@ function generatePDF(obj, save = false) {
   const imageInfo = addImageToPDF(doc, marginLeft, y);
   const imageWidth = imageInfo.width;
   const imageHeight = imageInfo.height;
+  const ImageMarginRight = marginLeft + imageWidth + padding; // Margin after image
 
-  // Personal Information - always centered on full page width (ignore image)
-  doc.setFont("NotoSans", "bold");
-  doc.setFontSize(16);
-  const name = obj.name;
-
-  // Always center on full page width
-  doc.text(name || "Your Name", midPage, y, { align: "center" });
-
-  // Move to next line for personal info
-  let personalInfoY = y + lineHeight + padding;
-
-  doc.setFont("NotoSans", "normal");
-  doc.setFontSize(10);
   const personalInfo = getPersonalInfoFromObj(obj);
   const personalInfo2 = getPersonalInfo2FromObj(obj);
+  let personalInfoY = y + lineHeight + padding;
 
-  // Personal info always centered on full page width (ignore image)
-  if (personalInfo) {
-    const fullLength = doc.getStringUnitWidth(personalInfo) * 10;
 
-    let location = obj.location;
-    let email = obj.email;
-    let linkedin = obj.linkedin;
-    let github = obj.github;
-    let website = obj.website;
+  if (hasImage()) {
+    // Personal Information 
+    doc.setFont("NotoSans", "bold");
+    doc.setFontSize(16);
+    const name = obj.name;
 
-    // location
-    let content = location ? `${location}` : "";
-    let temp = location ? `${location}` : "";
-    let tempLength = doc.getStringUnitWidth(temp) * 10;
-    doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
-      align: "right",
-    });
+    // Place name at right side of the image
+    doc.text(name || "Your Name", ImageMarginRight, y);
 
-    // email
-    content = temp && email ? ` • ${email}` : email ? `${email}` : "";
-    temp += temp && email ? ` • ${email}` : email ? `${email}` : "";
-    tempLength = doc.getStringUnitWidth(temp) * 10;
-    doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
-      align: "right",
-    });
+    // Move to next line for personal info
+    personalInfoY = y + lineHeight + padding;
+    doc.setFont("NotoSans", "normal");
+    doc.setFontSize(10);
 
-    // linkedin
-    content =
-      temp && linkedin ? ` • ${linkedin}` : linkedin ? `${linkedin}` : "";
-    temp += temp && linkedin ? ` • ${linkedin}` : linkedin ? `${linkedin}` : "";
-    tempLength = doc.getStringUnitWidth(temp) * 10;
-    if (content.includes("https://") || content.includes("www.")) {
-      doc.setTextColor("#115bca");
-      doc.setDrawColor("#115bca");
-      doc.textWithLink(
-        content,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY,
-        { align: "right" }
-      );
-      const textWidth = doc.getStringUnitWidth(linkedin) * 10;
-      doc.line(
-        midPage - (fullLength / 2 - tempLength) - textWidth,
-        personalInfoY,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY
-      );
-      doc.setTextColor("#000000");
-      doc.setDrawColor("#000000");
-    } else
-      doc.text(
-        content,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY,
-        { align: "right" }
-      );
+    // Place Personal Info right of the image
+    if (personalInfo) {
+      let location = obj.location;
+      let email = obj.email;
+      let linkedin = obj.linkedin;
+      let linkedin_placeholder = obj.linkedin_placeholder;
 
-    console.log(fullLength - tempLength, fullLength, tempLength);
+      // location
+      let content = location ? `${location}` : "";
+      let temp = location ? `${location}` : "";
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, ImageMarginRight, personalInfoY);
 
-    personalInfoY += lineHeight + padding;
+      // email
+      content = temp && email ? ` • ${email}` : email ? `${email}` : "";
+      temp += temp && email ? ` • ${email}` : email ? `${email}` : "";
+      doc.text(content, ImageMarginRight + tempLength, personalInfoY);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      // linkedin
+      content = formatOutput(temp, linkedin_placeholder, linkedin);
+      temp += formatOutput(temp, linkedin_placeholder, linkedin);
+      // console.log("linkedin", content, "|", temp);
+      if (linkedin.includes("https://") || linkedin.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY,
+          { url: linkedin }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          ImageMarginRight + tempLength,
+          personalInfoY,
+          ImageMarginRight + tempLength + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY
+        );
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      // console.log(fullLength - tempLength, fullLength, tempLength);
+
+      personalInfoY += lineHeight + padding;
+    }
+
+    if (personalInfo2) {
+      let github = obj.github;
+      let website = obj.website;
+      let github_placeholder = obj.github_placeholder;
+      let website_placeholder = obj.website_placeholder;
+
+      // github
+      let content = formatOutput("", github_placeholder, github);
+      let temp = formatOutput("", github_placeholder, github);
+      console.log("github", content, "|", temp);
+      if (github.includes("https://") || github.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          ImageMarginRight,
+          personalInfoY,
+          { url: github }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          ImageMarginRight,
+          personalInfoY,
+          ImageMarginRight + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight,
+          personalInfoY,
+        );
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+
+
+      // website
+      content = formatOutput(temp, website_placeholder, website);
+      temp += formatOutput(temp, website_placeholder, website);
+      if (website.includes("https://") || website.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY,
+          { url: website }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          ImageMarginRight + tempLength,
+          personalInfoY,
+          ImageMarginRight + tempLength + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY,
+        );
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      personalInfoY += lineHeight + padding;
+    }
   }
+  else {
+    // Personal Information 
+    doc.setFont("NotoSans", "bold");
+    doc.setFontSize(16);
+    const name = obj.name;
 
-  if (personalInfo2) {
-    const fullLength = doc.getStringUnitWidth(personalInfo2) * 10;
+    // Center name at mid-page
+    doc.text(name || "Your Name", midPage, y, { align: "center" });
 
-    let github = obj.github;
-    let website = obj.website;
+    // Move to next line for personal info
+    personalInfoY = y + lineHeight + padding;
+    doc.setFont("NotoSans", "normal");
+    doc.setFontSize(10);
 
-    // github
-    let content = github ? `${github}` : "";
-    let temp = github ? `${github}` : "";
-    let tempLength = doc.getStringUnitWidth(temp) * 10;
-    if (content.includes("https://") || content.includes("www.")) {
-      doc.setTextColor("#115bca");
-      doc.setDrawColor("#115bca");
-      doc.textWithLink(
-        content,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY,
-        { align: "right" }
-      );
-      const textWidth = doc.getStringUnitWidth(github) * 10;
-      doc.line(
-        midPage - (fullLength / 2 - tempLength) - textWidth,
-        personalInfoY,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY
-      );
-      doc.setTextColor("#000000");
-      doc.setDrawColor("#000000");
-    } else
-      doc.text(
-        content,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY,
-        { align: "right" }
-      );
+    // centered Personal Info
+    if (personalInfo) {
+      const fullLength = doc.getStringUnitWidth(personalInfo) * 10;
 
-    // website
-    content = temp && website ? ` • ${website}` : website ? `${website}` : "";
-    temp += temp && website ? ` • ${website}` : website ? `${website}` : "";
-    tempLength = doc.getStringUnitWidth(temp) * 10;
-    if (content.includes("https://") || content.includes("www.")) {
-      doc.setTextColor("#115bca");
-      doc.setDrawColor("#115bca");
-      doc.textWithLink(
-        content,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY,
-        { align: "right" }
-      );
-      const textWidth = doc.getStringUnitWidth(website) * 10;
-      doc.line(
-        midPage - (fullLength / 2 - tempLength) - textWidth,
-        personalInfoY,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY
-      );
-      doc.setTextColor("#000000");
-      doc.setDrawColor("#000000");
-    } else
-      doc.text(
-        content,
-        midPage - (fullLength / 2 - tempLength),
-        personalInfoY,
-        { align: "right" }
-      );
+      let location = obj.location;
+      let email = obj.email;
+      let linkedin = obj.linkedin;
+      let linkedin_placeholder = obj.linkedin_placeholder;
 
-    personalInfoY += lineHeight + padding;
+      // location
+      let content = location ? `${location}` : "";
+      let temp = location ? `${location}` : "";
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
+        align: "right",
+      });
+
+      // email
+      content = temp && email ? ` • ${email}` : email ? `${email}` : "";
+      temp += temp && email ? ` • ${email}` : email ? `${email}` : "";
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
+        align: "right",
+      });
+
+      // linkedin
+      content = formatOutput(temp, linkedin_placeholder, linkedin);
+      temp += formatOutput(temp, linkedin_placeholder, linkedin);
+      // console.log("linkedin", content, "|", temp);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      if (linkedin.includes("https://") || linkedin.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: linkedin, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      console.log(fullLength - tempLength, fullLength, tempLength);
+
+      personalInfoY += lineHeight + padding;
+    }
+
+    if (personalInfo2) {
+      const fullLength = doc.getStringUnitWidth(personalInfo2) * 10;
+
+      let github = obj.github;
+      let website = obj.website;
+      let github_placeholder = obj.github_placeholder;
+      let website_placeholder = obj.website_placeholder;
+
+      // github
+      let content = formatOutput("", github_placeholder, github);
+      let temp = formatOutput("", github_placeholder, github);
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+      console.log("github", content, "|", temp);
+      if (github.includes("https://") || github.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: github, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      // website
+      content = formatOutput(temp, website_placeholder, website);
+      temp += formatOutput(temp, website_placeholder, website);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      if (website.includes("https://") || website.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: website, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      personalInfoY += lineHeight + padding;
+    }
   }
 
   // If no personal info was displayed, set personalInfoY to continue from name
@@ -630,8 +808,9 @@ function generatePDF(obj, save = false) {
     const imageBottom = getImageBottomPosition(
       headerStartY,
       imageHeight,
-      padding
+      lineHeight + padding
     );
+    console.log("imageBottom", imageBottom, "|", personalInfoY);
     y = Math.max(personalInfoY, imageBottom);
   } else {
     y = personalInfoY;
@@ -689,8 +868,8 @@ function generatePDF(obj, save = false) {
           temp && description
             ? `, ${description.trim()}`
             : description
-            ? `${description.trim()}`
-            : "";
+              ? `${description.trim()}`
+              : "";
         let startX = marginLeft;
         temp.split("**").forEach((line, index) => {
           doc.setFont("NotoSans", "bold");
@@ -778,8 +957,8 @@ function generatePDF(obj, save = false) {
           temp && location
             ? ` - ${location.trim()}`
             : location
-            ? `${location.trim()}`
-            : "";
+              ? `${location.trim()}`
+              : "";
         doc.text(temp, marginLeft, y);
         y += lineHeight;
         checkAndAddPage();
@@ -998,6 +1177,10 @@ function loadHtml(obj) {
   document.getElementById("github").value = obj.github;
   document.getElementById("website").value = obj.website;
   document.getElementById("summary").value = obj.summary;
+
+  document.getElementById("linkedin_placeholder").value = obj.linkedin_placeholder || "";
+  document.getElementById("github_placeholder").value = obj.github_placeholder || "";
+  document.getElementById("website_placeholder").value = obj.website_placeholder  || "";
 
   // Load profile image using ImageHandler module
   loadImageFromData(obj);
@@ -1423,8 +1606,8 @@ async function generateAI() {
             content: JSON.stringify({
               "Job-description": JD,
               "user-information": yourself,
-              "language": language,
-              "today": new Date().toDateString(),
+              language: language,
+              today: new Date().toDateString(),
             }),
           },
         ],
