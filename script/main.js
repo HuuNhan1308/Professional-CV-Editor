@@ -507,7 +507,7 @@ function generatePDF(obj, save = false) {
   const imageInfo = addImageToPDF(doc, marginLeft, y);
   const imageWidth = imageInfo.width;
   const imageHeight = imageInfo.height;
-  const ImageMarginRight = marginLeft + imageWidth + padding; // Margin after image
+  const ImageMarginRight = marginLeft + imageWidth + padding + lineHeight / 2; // Margin after image
 
   const personalInfo = getPersonalInfoFromObj(obj);
   const personalInfo2 = getPersonalInfo2FromObj(obj);
@@ -1180,7 +1180,7 @@ function loadHtml(obj) {
 
   document.getElementById("linkedin_placeholder").value = obj.linkedin_placeholder || "";
   document.getElementById("github_placeholder").value = obj.github_placeholder || "";
-  document.getElementById("website_placeholder").value = obj.website_placeholder  || "";
+  document.getElementById("website_placeholder").value = obj.website_placeholder || "";
 
   // Load profile image using ImageHandler module
   loadImageFromData(obj);

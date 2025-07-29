@@ -4,8 +4,11 @@
     "email": "vuongquy51@gmail.com",
     "location": "Ho Chi Minh City",
     "linkedin": "www.linkedin.com/in/vương-đình-quý-224595356",
+    "linkedin_placeholder": "linkedin.com/in/sjnosukequy",
     "github": "https://github.com/sjnosukequy",
+    "github_placeholder": "github.com/sjnosukequy",
     "website": "",
+    "website_placeholder": "",
     "summary": "Aspiring AI Engineer with solid foundations in machine learning and software development. Adept at designing and implementing AI-driven solutions with a focus on Python and cloud technologies. Proven track record in project management and conducting in-depth data analysis.",
     "experiences": [
       {
@@ -66,23 +69,20 @@
   },
   "coverLetter": {
     "header": {
-      "name": "Vuong Dinh Quy",
-      "email": "vuongquy51@gmail.com",
+      "name": "",
+      "email": "",
       "phone": "",
-      "location": "Ho Chi Minh City",
-      "date": "Tue Jul 29 2025",
-      "recipientName": "Hiring Manager",
-      "recipientTitle": "Senior AI Engineer/ Data Scientist",
-      "companyName": "Bosch Global Software Technologies Company Limited",
-      "companyAddress": "+2, 364 Cong Hoa street, ward 13, Quận Tân Bình, TP Hồ Chí Minh"
+      "location": "",
+      "date": "",
+      "recipientName": "",
+      "recipientTitle": "",
+      "companyName": "",
+      "companyAddress": ""
     },
-    "greeting": "Dear Hiring Manager,",
-    "openingParagraph": "I am excited to apply for the Senior AI Engineer/Data Scientist position at Bosch Global Software Technologies. With my solid foundation in machine learning, coupled with hands-on experience in developing AI-driven solutions, I am eager to contribute to your innovative team.",
-    "bodyParagraphs": [
-      "In my recent role as a Business Analyst Intern at Primas Group, I successfully collaborated with developers to implement user-focused features while analyzing competitor products to enhance our offerings. My ability to extract insights from large datasets has been complemented by my academic training in Information Technology Engineering, where I maintained a GPA of 3.64.",
-      "Additionally, I have worked on projects such as the Coffee Warehouse Management Website, where I developed AI models and integrated them with data crawling pipelines. This experience has honed my skills in backend development using FastAPI and my knowledge in container orchestration with Docker, preparing me well for the responsibilities outlined in your job description."
-    ],
-    "closingParagraph": "I am particularly drawn to Bosch's commitment to innovative solutions and the opportunity to work in a dynamic environment. I am keen to leverage my experience to mentor junior colleagues and contribute to the strategic projects at Bosch.",
-    "signOff": "Thank you for considering my application. I look forward to the possibility of discussing how my background, skills, and enthusiasms align with the goals of Bosch. Sincerely, Vuong Dinh Quy."
+    "greeting": "",
+    "openingParagraph": "",
+    "bodyParagraphs": [],
+    "closingParagraph": "",
+    "signOff": ""
   }
 }
