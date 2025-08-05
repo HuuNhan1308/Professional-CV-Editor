@@ -1460,10 +1460,57 @@ Return a single JSON object with the following structure. Every text field must 
   }
 }
 
-3. Warnings & Requirements
+3. Context and Guidelines:
+
+For the following fields, if the user does not provide data, leave them as empty strings:
+- name
+- email
+- location
+- linkedin
+- github
+- website
+
+Summary Section:
+- Only include this section if you have relevant information that directly relates to the job description.
+- Do not use generic or boilerplate language (e.g., “passionate”, "aspiring").
+  Bad Example 1: "Motivated software developer with experience in AI integration, web automation, and data scraping."
+  Bad Example 2: "Versatile software developer with a strong background in AI integration, automation, and data-driven applications." 
+- Provide a concise summary that highlights your skills or background in direct relation to the job.
+  Good Example 1: "Software Engineer with X years of full stack web development experience specializing in Ruby on Rails and PostgreSQL. Domain expert in e-commerce and payments field as a result of working at multiple e-commerce companies."
+  Good Example 2: "Senior Software Engineer @ Google with 5 years of experience leading teams."
+- Ensure that keywords or technologies mentioned in the job description are integrated appropriately.
+
+Experiences Section:
+- Each experience should show position, company, location, employment dates, and bullet points for key achievements.
+- Start each bullet point with a past-tense action verb.
+- Present timeline and technologies clearly.
+
+Projects:
+- Include projects that are relevant to the job.
+- Only list real and significant projects.
+- Avoid trivial or tutorial-based ones.
+- Include demo links or GitHub repos if applicable.
+
+Skills:
+- Highlight only relevant skills for the job.
+- Do not list every technology ever used.
+- Format clearly, and group related skills where applicable.
+
+Educations:
+- List educational background clearly.
+- Omit GPA if weak or not provided.
+- Optionally include notable academic achievements related to the role.
+
+Language:
+- Generate the CV and cover letter in the language specified in the "language" field.
+- If the language is not specified, default to English.
+- If the specified language is "english", DO NOT translate—keep the content fully in English.
+
+4. Warnings & Requirements
 
 CV:
 - Use strong, past-tense action verbs in experience bullets.
+- Do not use generic or boilerplate language (e.g., “passionate”, "aspiring") in the summary.
 - Do not include GPA unless it's provided and strong.
 - Only include real, significant projects. No tutorial or toy examples.
 - Skills must be grouped clearly and described briefly.
@@ -1479,27 +1526,7 @@ Cover Letter:
 - Keep the letter under 350 words.
 - If the specified language is English, do not translate the cover letter or CV. Otherwise, ensure the entire cover letter and CV are translated into the target language fluently.
 
-Examples of Good vs. Bad Content (CV):
-Good summary: “Software Engineer with 6+ years of experience in scalable e-commerce systems using Ruby on Rails and PostgreSQL.”
-Bad summary: “Passionate software developer seeking challenges.”
-
-Good experience bullet: “Led migration from monolith to microservices, reducing server load by 42%.”
-Bad bullet: “Improved system performance.”
-
-Good project: “Built encrypted WebSocket server handling 500+ concurrent users.”
-Bad project: “Chat tutorial project.”
-
-Good skill description: “Backend: Node.js, Express, Fastify”
-Bad skill description: “C, C++, Java, Kotlin, Swift, Haskell, Go, Python, Ruby, …”
-
-Examples of Good vs. Bad Content (Cover Letter):
-Good opening: “I’m excited to apply for the Frontend Engineer role at SmartTech. As a React developer who recently improved load time by 60%, I believe I can immediately contribute to your user experience goals.”
-Bad opening: “To whom it may concern, I am applying for a job at your company because I am looking for a new challenge.”
-
-Good body: “While leading the redesign of our e-commerce checkout flow, I collaborated with backend and design teams and improved conversion rates by 32%.”
-Bad body: “I work well in teams and am good at solving problems.”
-
-4. Translation Guidance
+5. Translation Guidance
 
 If the input language is English, do not translate any output. Leave all content in English.
 If the input language is anything other than English, translate all fields fully and fluently.
@@ -1516,7 +1543,7 @@ Bad university name: “Đại học Công nghệ và Giáo dục Hồ Chí Minh
 Good greeting: “Kính gửi Nhà tuyển dụng,”
 Bad greeting: “Kính gửi Người tuyển dụng,” or “Dear Người nhận,”
 
-5. Context
+6. Input Format
 
 You will receive input in the following format:
 
