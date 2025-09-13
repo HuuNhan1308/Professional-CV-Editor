@@ -9,6 +9,15 @@ import {
   hasImage,
 } from "./imageHandler.js";
 
+import {
+  initializeProfileHandler,
+  saveProfileToStorage,
+  loadProfile,
+  mapObject_profile,
+  mapObject_cv,
+  deleteProfile
+} from "./personalProfileHandler.js"
+
 const maxCharacters = 260; // limit the number of characters
 const padding = 5;
 const inputEle = document.querySelector("#input");
@@ -18,6 +27,7 @@ const cover_letter = document.querySelector("#Cover-letter");
 let CV_obj = {
   name: "",
   email: "",
+  phone: "",
   location: "",
   linkedin: "",
   github: "",
@@ -227,13 +237,7 @@ function getPersonalInfoFromObj(obj) {
   const data = [];
   if (obj.location) data.push(obj.location);
   if (obj.email) data.push(obj.email);
-  if (obj.linkedin || obj.linkedin_placeholder) {
-    if (obj.linkedin_placeholder) {
-      data.push(obj.linkedin_placeholder);
-    } else if (obj.linkedin) {
-      data.push(obj.linkedin);
-    }
-  }
+  if (obj.phone) data.push(obj.phone);
   return data.join(" • ");
 }
 
@@ -251,6 +255,13 @@ function getPersonalInfo2FromObj(obj) {
       data.push(obj.website_placeholder);
     } else if (obj.website) {
       data.push(obj.website);
+    }
+  }
+  if (obj.linkedin || obj.linkedin_placeholder) {
+    if (obj.linkedin_placeholder) {
+      data.push(obj.linkedin_placeholder);
+    } else if (obj.linkedin) {
+      data.push(obj.linkedin);
     }
   }
   return data.join(" • ");
@@ -339,6 +350,7 @@ AutoUpdate();
 function getObject() {
   const name = document.getElementById("name")?.value;
   const email = document.getElementById("email")?.value;
+  const phone = document.getElementById("phone")?.value;
   const location = document.getElementById("location")?.value;
   const linkedin = document.getElementById("linkedin")?.value;
   const linkedin_placeholder = document.getElementById("linkedin_placeholder")?.value;
@@ -394,6 +406,7 @@ function getObject() {
     cv: {
       name,
       email,
+      phone,
       location,
       linkedin,
       linkedin_placeholder,
@@ -532,8 +545,7 @@ function generatePDF(obj, save = false) {
     if (personalInfo) {
       let location = obj.location;
       let email = obj.email;
-      let linkedin = obj.linkedin;
-      let linkedin_placeholder = obj.linkedin_placeholder;
+      let phone = obj.phone;
 
       // location
       let content = location ? `${location}` : "";
@@ -547,34 +559,10 @@ function generatePDF(obj, save = false) {
       doc.text(content, ImageMarginRight + tempLength, personalInfoY);
       tempLength = doc.getStringUnitWidth(temp) * 10;
 
-      // linkedin
-      content = formatOutput(temp, linkedin_placeholder, linkedin);
-      temp += formatOutput(temp, linkedin_placeholder, linkedin);
-      // console.log("linkedin", content, "|", temp);
-      if (linkedin.includes("https://") || linkedin.includes("www.")) {
-        doc.setTextColor("#115bca");
-        doc.setDrawColor("#115bca");
-        doc.textWithLink(
-          content,
-          ImageMarginRight + tempLength,
-          personalInfoY,
-          { url: linkedin }
-        );
-        const textWidth = doc.getStringUnitWidth(content) * 10;
-        doc.line(
-          ImageMarginRight + tempLength,
-          personalInfoY,
-          ImageMarginRight + tempLength + textWidth,
-          personalInfoY
-        );
-        doc.setTextColor("#000000");
-        doc.setDrawColor("#000000");
-      } else
-        doc.text(
-          content,
-          ImageMarginRight + tempLength,
-          personalInfoY
-        );
+      // phone
+      content = temp && phone ? ` • ${phone}` : phone ? `${phone}` : "";
+      temp += temp && phone ? ` • ${phone}` : phone ? `${phone}` : "";
+      doc.text(content, ImageMarginRight + tempLength, personalInfoY);
       tempLength = doc.getStringUnitWidth(temp) * 10;
 
       // console.log(fullLength - tempLength, fullLength, tempLength);
@@ -585,6 +573,8 @@ function generatePDF(obj, save = false) {
     if (personalInfo2) {
       let github = obj.github;
       let website = obj.website;
+      let linkedin = obj.linkedin;
+      let linkedin_placeholder = obj.linkedin_placeholder;
       let github_placeholder = obj.github_placeholder;
       let website_placeholder = obj.website_placeholder;
 
@@ -647,6 +637,37 @@ function generatePDF(obj, save = false) {
           personalInfoY,
         );
       tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      // linkedin
+      content = formatOutput(temp, linkedin_placeholder, linkedin);
+      temp += formatOutput(temp, linkedin_placeholder, linkedin);
+      // console.log("linkedin", content, "|", temp);
+      if (linkedin.includes("https://") || linkedin.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY,
+          { url: linkedin }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          ImageMarginRight + tempLength,
+          personalInfoY,
+          ImageMarginRight + tempLength + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY
+        );
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
       personalInfoY += lineHeight + padding;
     }
   }
@@ -670,8 +691,7 @@ function generatePDF(obj, save = false) {
 
       let location = obj.location;
       let email = obj.email;
-      let linkedin = obj.linkedin;
-      let linkedin_placeholder = obj.linkedin_placeholder;
+      let phone = obj.phone;
 
       // location
       let content = location ? `${location}` : "";
@@ -689,38 +709,13 @@ function generatePDF(obj, save = false) {
         align: "right",
       });
 
-      // linkedin
-      content = formatOutput(temp, linkedin_placeholder, linkedin);
-      temp += formatOutput(temp, linkedin_placeholder, linkedin);
-      // console.log("linkedin", content, "|", temp);
+      // phone
+      content = temp && phone ? ` • ${phone}` : phone ? `${phone}` : "";
+      temp += temp && phone ? ` • ${phone}` : phone ? `${phone}` : "";
       tempLength = doc.getStringUnitWidth(temp) * 10;
-      if (linkedin.includes("https://") || linkedin.includes("www.")) {
-        doc.setTextColor("#115bca");
-        doc.setDrawColor("#115bca");
-        doc.textWithLink(
-          content,
-          midPage - (fullLength / 2 - tempLength),
-          personalInfoY,
-          { url: linkedin, align: "right" }
-        );
-        const textWidth = doc.getStringUnitWidth(content) * 10;
-        doc.line(
-          midPage - (fullLength / 2 - tempLength) - textWidth,
-          personalInfoY,
-          midPage - (fullLength / 2 - tempLength),
-          personalInfoY
-        );
-        doc.setTextColor("#000000");
-        doc.setDrawColor("#000000");
-      } else
-        doc.text(
-          content,
-          midPage - (fullLength / 2 - tempLength),
-          personalInfoY,
-          { align: "right" }
-        );
-
-      console.log(fullLength - tempLength, fullLength, tempLength);
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
+        align: "right",
+      });
 
       personalInfoY += lineHeight + padding;
     }
@@ -730,6 +725,8 @@ function generatePDF(obj, save = false) {
 
       let github = obj.github;
       let website = obj.website;
+      let linkedin = obj.linkedin;
+      let linkedin_placeholder = obj.linkedin_placeholder;
       let github_placeholder = obj.github_placeholder;
       let website_placeholder = obj.website_placeholder;
 
@@ -793,6 +790,39 @@ function generatePDF(obj, save = false) {
           personalInfoY,
           { align: "right" }
         );
+
+      // linkedin
+      content = formatOutput(temp, linkedin_placeholder, linkedin);
+      temp += formatOutput(temp, linkedin_placeholder, linkedin);
+      // console.log("linkedin", content, "|", temp);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      if (linkedin.includes("https://") || linkedin.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: linkedin, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(content) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      console.log(fullLength - tempLength, fullLength, tempLength);
 
       personalInfoY += lineHeight + padding;
     }
@@ -1172,6 +1202,7 @@ function loadHtml(obj) {
   // const obj = getObject()
   document.getElementById("name").value = obj.name;
   document.getElementById("email").value = obj.email;
+  document.getElementById("phone").value = obj.phone;
   document.getElementById("location").value = obj.location;
   document.getElementById("linkedin").value = obj.linkedin;
   document.getElementById("github").value = obj.github;
@@ -1313,6 +1344,7 @@ function loadHtml(obj) {
   AutoUpdate();
 }
 
+// Handle save file json upload
 inputEle.onchange = async function () {
   document.querySelector(".err").innerText = "";
   if (inputEle.files.length == 0) return;
@@ -1343,6 +1375,33 @@ radios[1].addEventListener("change", () => {
 
 // Initialize image handler
 initializeImageHandler();
+
+// initialize personal profile handler
+initializeProfileHandler();
+
+function profileEventListener() {
+  document.getElementById("save-profile").addEventListener("click", ()=>{
+    const profile_idx = parseInt(document.getElementById("profile-select").value);
+    console.log("profile_idx: ",profile_idx);
+    const obj = getObject();
+    const temp_obj = mapObject_profile(obj);
+    // console.log(temp_obj);
+    saveProfileToStorage(profile_idx, temp_obj);
+  });
+  document.getElementById("load-profile").addEventListener("click", ()=>{
+    const profile_idx = parseInt(document.getElementById("profile-select").value);
+    const obj_cv = getObject();
+    const obj_profile = loadProfile(profile_idx);
+    console.log(obj_cv, obj_profile);
+    const obj_final = mapObject_cv(obj_profile, obj_cv);
+    loadHtml(obj_final.cv);
+  })
+  document.getElementById("delete-profile").addEventListener("click", ()=>{
+    const profile_idx = parseInt(document.getElementById("profile-select").value);
+    deleteProfile(profile_idx);
+  })
+}
+profileEventListener();
 
 // Initialize all event listeners for buttons
 function initializeEventListeners() {
@@ -1389,6 +1448,7 @@ I need you to generate both a tailored CV and a cover letter in response to a jo
 
 - Be in JSON format matching the schema below
 - Use natural, real-life phrasing and tone appropriate for professional job applications
+- In the summary/overview section, you must NOT use generic phrases such as “aspiring”, “passionate”, “motivated”, or any similar non-specific terms.
 - Translate all fields into the specified language—except if the specified language is English (case-insensitive), in which case the output must remain fully in English
 
 The cover letter should:
@@ -1404,6 +1464,7 @@ Return a single JSON object with the following structure. Every text field must 
   "cv": {
     "name": "",
     "email": "",
+    "phone": "",
     "location": "",
     "linkedin": "",
     "github": "",
@@ -1469,6 +1530,7 @@ For the following fields, if the user does not provide data, leave them as empty
 - linkedin
 - github
 - website
+- phone
 
 Summary Section:
 - Only include this section if you have relevant information that directly relates to the job description.
@@ -1550,7 +1612,7 @@ You will receive input in the following format:
 {
   "Job-description": "<full job posting>",
   "user-information": "<optional CV or cover letter content>",
-  "language": "<language code, e.g., 'english', 'vietnamese'>",
+  "translate-to-language": "<language code, e.g., 'english', 'vietnamese'>",
   "today": "<date string>"
 }
 
@@ -1597,7 +1659,7 @@ async function generateAI() {
             content: JSON.stringify({
               "Job-description": JD,
               "user-information": yourself,
-              language: language,
+              "translate-to-language": language,
               today: new Date().toDateString(),
             }),
           },
