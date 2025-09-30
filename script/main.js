@@ -23,6 +23,17 @@ const padding = 5;
 const inputEle = document.querySelector("#input");
 const AI_select = document.querySelector("#ai-select");
 const cover_letter = document.querySelector("#Cover-letter");
+let GEMINI_API_KEY = "";
+const apiKeyInput = document.getElementById("api-key");
+const saveApiKeyBtn = document.getElementById("save-api-key");
+
+// Load saved API key from localStorage if available
+GEMINI_API_KEY = localStorage.getItem("gemini_api_key");
+
+saveApiKeyBtn.addEventListener("click", () => {
+  GEMINI_API_KEY = apiKeyInput.value;
+  localStorage.setItem("gemini_api_key", GEMINI_API_KEY);
+});
 
 let CV_obj = {
   name: "",
@@ -1380,15 +1391,15 @@ initializeImageHandler();
 initializeProfileHandler();
 
 function profileEventListener() {
-  document.getElementById("save-profile").addEventListener("click", ()=>{
+  document.getElementById("save-profile").addEventListener("click", () => {
     const profile_idx = parseInt(document.getElementById("profile-select").value);
-    console.log("profile_idx: ",profile_idx);
+    console.log("profile_idx: ", profile_idx);
     const obj = getObject();
     const temp_obj = mapObject_profile(obj);
     // console.log(temp_obj);
     saveProfileToStorage(profile_idx, temp_obj);
   });
-  document.getElementById("load-profile").addEventListener("click", ()=>{
+  document.getElementById("load-profile").addEventListener("click", () => {
     const profile_idx = parseInt(document.getElementById("profile-select").value);
     const obj_cv = getObject();
     const obj_profile = loadProfile(profile_idx);
@@ -1396,7 +1407,7 @@ function profileEventListener() {
     const obj_final = mapObject_cv(obj_profile, obj_cv);
     loadHtml(obj_final.cv);
   })
-  document.getElementById("delete-profile").addEventListener("click", ()=>{
+  document.getElementById("delete-profile").addEventListener("click", () => {
     const profile_idx = parseInt(document.getElementById("profile-select").value);
     deleteProfile(profile_idx);
   })
@@ -1630,6 +1641,8 @@ async function generateAI() {
   const language = document.getElementById("language").value;
   const error = document.querySelector("#AI-error");
   const aiLoader = document.querySelector("#AiLoader");
+  const MODEL_ID = "gemini-flash-lite-latest"
+  const GENERATE_CONTENT_API = "generateContent"
   error.innerText = "";
   if (!JD) {
     error.innerText = "Job Description is required";
@@ -1637,35 +1650,279 @@ async function generateAI() {
   }
   try {
     aiLoader.classList.replace("hidden", "flex");
-    const res = await fetch("https://text.pollinations.ai", {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:${GENERATE_CONTENT_API}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: `openai-large`,
-        response_format: {
-          type: "json_object",
-        },
-        private: true,
-        messages: [
-          {
-            role: "developer",
-            content: INSprompt,
+      body: JSON.stringify(
+        {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": JSON.stringify({
+                    "Job-description": JD,
+                    "user-information": yourself,
+                    "translate-to-language": language,
+                    today: new Date().toDateString(),
+                  })
+                },
+              ]
+            },
+          ],
+          "generationConfig": {
+            "thinkingConfig": {
+              "thinkingBudget": -1,
+            },
+            "responseMimeType": "application/json",
+            "responseSchema": {
+              "type": "object",
+              "properties": {
+                "cv": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "linkedin": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "github": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "website": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "experiences": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "position": {
+                            "type": "string"
+                          },
+                          "company": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "string"
+                          },
+                          "dates": {
+                            "type": "string"
+                          },
+                          "bullets": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "propertyOrdering": [
+                          "position",
+                          "company",
+                          "location",
+                          "dates",
+                          "bullets"
+                        ]
+                      }
+                    },
+                    "educations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "university": {
+                            "type": "string"
+                          },
+                          "degree": {
+                            "type": "string"
+                          },
+                          "gpa": {
+                            "type": "string"
+                          },
+                          "graduationDate": {
+                            "type": "string"
+                          }
+                        },
+                        "propertyOrdering": [
+                          "university",
+                          "degree",
+                          "gpa",
+                          "graduationDate"
+                        ]
+                      }
+                    },
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "projectName": {
+                            "type": "string"
+                          },
+                          "projectLink": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "bullets": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "propertyOrdering": [
+                          "projectName",
+                          "projectLink",
+                          "bullets"
+                        ]
+                      }
+                    },
+                    "skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "skill": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          }
+                        },
+                        "propertyOrdering": [
+                          "skill",
+                          "description"
+                        ]
+                      }
+                    }
+                  },
+                  "propertyOrdering": [
+                    "name",
+                    "email",
+                    "phone",
+                    "location",
+                    "linkedin",
+                    "github",
+                    "website",
+                    "summary",
+                    "experiences",
+                    "educations",
+                    "projects",
+                    "skills"
+                  ]
+                },
+                "coverLetter": {
+                  "type": "object",
+                  "properties": {
+                    "header": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "location": {
+                          "type": "string"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "recipientName": {
+                          "type": "string"
+                        },
+                        "recipientTitle": {
+                          "type": "string"
+                        },
+                        "companyName": {
+                          "type": "string"
+                        },
+                        "companyAddress": {
+                          "type": "string"
+                        }
+                      },
+                      "propertyOrdering": [
+                        "name",
+                        "email",
+                        "phone",
+                        "location",
+                        "date",
+                        "recipientName",
+                        "recipientTitle",
+                        "companyName",
+                        "companyAddress"
+                      ]
+                    },
+                    "greeting": {
+                      "type": "string"
+                    },
+                    "openingParagraph": {
+                      "type": "string"
+                    },
+                    "bodyParagraphs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "closingParagraph": {
+                      "type": "string"
+                    },
+                    "signOff": {
+                      "type": "string"
+                    }
+                  },
+                  "propertyOrdering": [
+                    "header",
+                    "greeting",
+                    "openingParagraph",
+                    "bodyParagraphs",
+                    "closingParagraph",
+                    "signOff"
+                  ]
+                }
+              },
+              "propertyOrdering": [
+                "cv",
+                "coverLetter"
+              ]
+            },
           },
-          {
-            role: "user",
-            content: JSON.stringify({
-              "Job-description": JD,
-              "user-information": yourself,
-              "translate-to-language": language,
-              today: new Date().toDateString(),
-            }),
+          "system_instruction": {
+            "parts": [
+              {
+                "text": INSprompt
+              }
+            ]
           },
-        ],
-      }),
+        }
+      ),
     });
-    const json = await res.json();
+    const json = await res.json().then(res => JSON.parse(res.candidates[0].content.parts[0].text));
     // console.log(typeof(json))
     const cv = json.cv;
     const coverLetter = json.coverLetter;

@@ -183,6 +183,15 @@
 
         <div id="ai-editor" class="flex-1 overflow-auto px-5 hidden">
           <h2 class="text-2xl font-bold mb-6">AI Editor</h2>
+          <h3 class="text-xl font-semibold mb-2">Gemini API Key</h3>
+          <div class="mb-4">
+            <div class="flex flex-row gap-2">
+              <input type="text" id="api-key" placeholder="Enter your Gemini API Key" class="w-full p-2 border rounded" />
+              <button id="save-api-key" class="btn btn-info text-white px-4 py-2 rounded">Save API Key</button>
+            </div>
+            <span class="label text-sm" id="api-label">We do not store your API key anywhere, it is only used to call the Gemini API</span>
+          </div>
+
           <h3 class="text-xl font-semibold mb-2">Job Description</h3>
           <textarea id="JD" placeholder="Job Description" class="w-full p-3 border rounded mb-2 h-24"></textarea>
           <h3 class="text-xl font-semibold mb-2">Yourself</h3>
