@@ -6,145 +6,117 @@ import {
   loadImageFromData,
   getImageData,
   initializeImageHandler,
-  hasImage
-} from './imageHandler.js';
+  hasImage,
+} from "./imageHandler.js";
+
+import {
+  initializeProfileHandler,
+  saveProfileToStorage,
+  loadProfile,
+  mapObject_profile,
+  mapObject_cv,
+  deleteProfile
+} from "./personalProfileHandler.js"
+
+import HideShowKey from "./hideShowKey.js";
 
 const maxCharacters = 260; // limit the number of characters
 const padding = 5;
 const inputEle = document.querySelector("#input");
 const AI_select = document.querySelector("#ai-select");
 const cover_letter = document.querySelector("#Cover-letter");
+let GEMINI_API_KEY = "";
+const apiKeyInput = document.getElementById("api-key");
+const saveApiKeyBtn = document.getElementById("save-api-key");
+const apiEyeDiv = document.getElementById("api-eye-div");
+const languageSelect = document.getElementById("language");
+
+
+// Load saved API key from localStorage if available
+GEMINI_API_KEY = localStorage.getItem("gemini_api_key");
+if (GEMINI_API_KEY) {
+  apiKeyInput.value = GEMINI_API_KEY;
+}
+
+// Initialize HideShowKey functionality
+new HideShowKey(apiEyeDiv, apiKeyInput);
+
+saveApiKeyBtn.addEventListener("click", () => {
+  GEMINI_API_KEY = apiKeyInput.value;
+  localStorage.setItem("gemini_api_key", GEMINI_API_KEY);
+});
+
+let CV_obj = {
+  name: "",
+  email: "",
+  phone: "",
+  location: "",
+  linkedin: "",
+  github: "",
+  website: "",
+  summary: "",
+  experiences: [
+    {
+      position: "",
+      company: "",
+      location: "",
+      dates: "",
+      bullets: "",
+    },
+  ],
+  educations: [
+    {
+      university: "",
+      degree: "",
+      gpa: "",
+      graduationDate: "",
+    },
+  ],
+  projects: [
+    {
+      projectName: "",
+      projectLink: "",
+      bullets: "",
+    },
+  ],
+  skills: [
+    {
+      skill: "",
+      description: "",
+    },
+  ],
+  certificates: [
+    {
+      certName: "",
+      "issuer/description": "",
+      certDate: "",
+    },
+  ],
+};
+
+let CoverLetter_Obj = {
+  header: {
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    date: "",
+    recipientName: "",
+    recipientTitle: "",
+    companyName: "",
+    companyAddress: "",
+  },
+  greeting: "",
+  openingParagraph: "",
+  bodyParagraphs: [],
+  closingParagraph: "",
+  signOff: "",
+};
 
 function limitCharacters(input) {
   if (input.value.length > maxCharacters) {
     input.value = input.value.slice(0, maxCharacters);
   }
-}
-
-function updatePreview() {
-  const preview = document.getElementById("cv-preview");
-  preview.innerHTML = `
-      <!-- Personal Info -->
-      <div class="text-center">
-          <h1 class="text-3xl font-bold">${
-            document.getElementById("name").value
-          }</h1>
-          <div class="flex flex-wrap justify-center gap-2 mt-2 text-gray-600">
-              ${PersonalInfo()}
-          </div>
-      </div>
-  
-      <!-- Summary -->
-      ${
-        document.getElementById("summary").value
-          ? `
-      <div>
-          <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Summary</h2>
-          <p class="text-gray-700 break-words">${
-            document.getElementById("summary").value
-          }</p>
-      </div>`
-          : ""
-      }
-  
-      <!-- Experience -->
-      <div>
-          <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Experience</h2>
-          ${Array.from(document.querySelectorAll(".experience-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input, textarea");
-              return `
-              <div>
-                  <div class="flex justify-between">
-                      <h3 class="font-semibold">${fields[0].value}</h3>
-                      <span class="text-gray-600">${fields[3].value}</span>
-                  </div>
-                  <div class="flex justify-between text-gray-600">
-                      <span>${fields[1].value}</span>
-                      <span>${fields[2].value}</span>
-                  </div>
-                  <ul class="list-disc ml-6 mt-2">
-                      ${fields[4].value
-                        .split("\n")
-                        .map(
-                          (point) => `<li class="text-gray-700">${point}</li>`
-                        )
-                        .join("")}
-                  </ul>
-              </div>
-            `;
-            })
-            .join("")}
-      </div>
-  
-      <!-- Projects -->
-      <div>
-          <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Projects</h2>
-          ${Array.from(document.querySelectorAll(".project-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input, textarea");
-              return `
-              <div>
-                  <div class="flex justify-between">
-                      <h3 class="font-semibold">${fields[0].value}</h3>
-                      <span class="text-gray-600">${fields[1].value}</span>
-                  </div>
-                  <ul class="list-disc ml-6 mt-2">
-                      ${fields[2].value
-                        .split("\n")
-                        .map(
-                          (point) => `<li class="text-gray-700">${point}</li>`
-                        )
-                        .join("")}
-                  </ul>
-              </div>
-            `;
-            })
-            .join("")}
-      </div>
-  
-      <!-- Education -->
-      <div>
-          <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Education</h2>
-          ${Array.from(document.querySelectorAll(".education-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input");
-              return `
-              <div class="flex justify-between">
-                  <div>
-                      <h3 class="font-semibold">${fields[0].value}</h3>
-                      <p class="text-gray-600">${fields[1].value}</p>
-                  </div>
-                  <div class="text-right">
-                      <p class="text-gray-600">${fields[3].value}</p>
-                      ${
-                        fields[2].value
-                          ? `<p class="text-gray-600">GPA: ${fields[2].value}</p>`
-                          : ""
-                      }
-                  </div>
-              </div>
-            `;
-            })
-            .join("")}
-      </div>
-  
-      <!-- Skills -->
-      <div>
-          <h2 class="text-xl font-bold mb-2 border-b-2 border-gray-300">Skills</h2>
-          ${Array.from(document.querySelectorAll(".skills-entry"))
-            .map((entry) => {
-              const fields = entry.querySelectorAll("input");
-              return `
-              <div class="flex flex-row">
-                  <p class="font-semibold">${fields[0].value}</p>
-                  <p class="text-gray-600">: ${fields[1].value}</p>
-              </div>
-            `;
-            })
-            .join("")}
-      </div>
-    `;
 }
 
 function PersonalInfo() {
@@ -172,15 +144,34 @@ function getPersonalInfoFromObj(obj) {
   const data = [];
   if (obj.location) data.push(obj.location);
   if (obj.email) data.push(obj.email);
-  if (obj.linkedin) data.push(obj.linkedin);
-  return data.join(' • ');
+  if (obj.phone) data.push(obj.phone);
+  return data.join(" • ");
 }
 
 function getPersonalInfo2FromObj(obj) {
   const data = [];
-  if (obj.github) data.push(obj.github);
-  if (obj.website) data.push(obj.website);
-  return data.join(' • ');
+  if (obj.github || obj.github_placeholder) {
+    if (obj.github_placeholder) {
+      data.push(obj.github_placeholder);
+    } else if (obj.github) {
+      data.push(obj.github);
+    }
+  }
+  if (obj.website || obj.website_placeholder) {
+    if (obj.website_placeholder) {
+      data.push(obj.website_placeholder);
+    } else if (obj.website) {
+      data.push(obj.website);
+    }
+  }
+  if (obj.linkedin || obj.linkedin_placeholder) {
+    if (obj.linkedin_placeholder) {
+      data.push(obj.linkedin_placeholder);
+    } else if (obj.linkedin) {
+      data.push(obj.linkedin);
+    }
+  }
+  return data.join(" • ");
 }
 
 function deleteBlock(btn, containerId) {
@@ -188,7 +179,7 @@ function deleteBlock(btn, containerId) {
   // Count only the block entries (child elements)
   if (container.children.length > 1) {
     btn.parentElement.remove();
-    updatePreview();
+    // AutoUpdate();
   } else {
     alert("At least one block must remain in this section.");
   }
@@ -227,6 +218,21 @@ function addEducation() {
   AutoUpdate();
 }
 
+function addCertificate() {
+  const newEntry = document.createElement("div");
+  newEntry.className = "certificate-entry space-y-4 mt-6";
+  newEntry.innerHTML = `
+      <input type="text" placeholder="Certification Name" class="w-full p-2 border rounded" />
+      <input type="text" placeholder="Issuer/Description" class="w-full p-2 border rounded" />
+      <input type="text" placeholder="Certification Date" class="w-full p-2 border rounded" />
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="certificate-fields">
+        Delete
+      </button>
+    `;
+  document.getElementById("certificate-fields").appendChild(newEntry);
+  AutoUpdate();
+}
+
 function addProject() {
   const newEntry = document.createElement("div");
   newEntry.className = "project-entry";
@@ -259,58 +265,23 @@ function addSkill() {
 function AutoUpdate() {
   // Update preview on any input
   const obj = getObject();
-  generatePDF(obj);
+  generatePDF(obj.cv);
 }
 AutoUpdate();
-
-let obj = {
-  name: "",
-  email: "",
-  location: "",
-  linkedin: "",
-  github: "",
-  website: "",
-  summary: "",
-  experiences: [
-    {
-      position: "",
-      company: "",
-      location: "",
-      dates: "",
-      bullets: "",
-    },
-  ],
-  educations: [
-    {
-      university: "",
-      degree: "",
-      gpa: "",
-      graduationDate: "",
-    },
-  ],
-  projects: [
-    {
-      projectName: "",
-      projectLink: "",
-      bullets: "",
-    },
-  ],
-  skills: [
-    {
-      skill: "",
-      description: "",
-    },
-  ],
-};
 
 function getObject() {
   const name = document.getElementById("name")?.value;
   const email = document.getElementById("email")?.value;
+  const phone = document.getElementById("phone")?.value;
   const location = document.getElementById("location")?.value;
   const linkedin = document.getElementById("linkedin")?.value;
+  const linkedin_placeholder = document.getElementById("linkedin_placeholder")?.value;
   const github = document.getElementById("github")?.value;
+  const github_placeholder = document.getElementById("github_placeholder")?.value;
   const website = document.getElementById("website")?.value;
+  const website_placeholder = document.getElementById("website_placeholder")?.value;
   const summary = document.getElementById("summary")?.value;
+  const language = document.getElementById("language")?.value;
   const experiences = Array.from(
     document.querySelectorAll(".experience-entry")
   ).map((entry, index) => {
@@ -350,12 +321,43 @@ function getObject() {
     const graduationDate = fields[3].value;
     return { university, degree, gpa, graduationDate };
   });
-  
+  const certificates = Array.from(
+    document.querySelectorAll(".certificate-entry")
+  ).map((entry) => {
+    const fields = entry.querySelectorAll("input");
+    const certName = fields[0].value;
+    const issuer = fields[1].value;
+    const certDate = fields[2].value;
+    return { certName, "issuer/description": issuer, certDate };
+  })
+
   // Get image data from ImageHandler module
   const imageData = getImageData();
-  
-  const obj = { name, email, location, linkedin, github, website, summary, experiences, projects, skills, educations, ...imageData };
-  console.log('get object', obj);
+
+  const obj = {
+    cv: {
+      name,
+      email,
+      phone,
+      language,
+      location,
+      linkedin,
+      linkedin_placeholder,
+      github,
+      github_placeholder,
+      website,
+      website_placeholder,
+      summary,
+      experiences,
+      projects,
+      skills,
+      educations,
+      certificates,
+      ...imageData,
+    },
+    coverLetter: CoverLetter_Obj,
+  };
+  console.log("get object", obj);
   return obj;
 }
 
@@ -388,9 +390,11 @@ function generatePDF(obj, save = false) {
   let y = 40;
   const lineHeight = 16;
   var midPage = doc.internal.pageSize.getWidth() / 2;
-  let marginRight = doc.internal.pageSize.getWidth() - 40;
-  let marginBottom = doc.internal.pageSize.getHeight() - 40;
+  let marginRight = doc.internal.pageSize.getWidth() - 30;
+  let marginBottom = doc.internal.pageSize.getHeight() - 30;
   let marginTop = 40;
+  let deliminator = ' | '
+  let deliminatorLength = doc.getStringUnitWidth(deliminator) * 10
   console.log(
     "doc",
     doc.internal.pageSize.getWidth(),
@@ -405,6 +409,9 @@ function generatePDF(obj, save = false) {
   } else if (language == "Korean") {
     doc.addFileToVFS("NotoSans-normal.ttf", KrRegular);
     doc.addFileToVFS("NotoSans-bold.ttf", KrBold);
+  } else if (language == "Chinese") {
+    doc.addFileToVFS("NotoSans-normal.ttf", RegCN);
+    doc.addFileToVFS("NotoSans-bold.ttf", BoldCN);
   } else {
     doc.addFileToVFS("NotoSans-normal.ttf", font);
     doc.addFileToVFS("NotoSans-bold.ttf", fontBold);
@@ -430,123 +437,384 @@ function generatePDF(obj, save = false) {
     }
   }
 
+  // information string function
+  function formatOutput(temp, placeholder, link) {
+    if (temp) {
+      if (placeholder) return `${deliminator}${placeholder}`;
+      if (link) return `${deliminator}${link}`;
+    } else {
+      if (placeholder) return `${placeholder}`;
+      if (link) return `${link}`;
+    }
+    return "";
+  }
+
+  function formatOutputNoDot(placeholder, link) {
+    if (placeholder) return `${placeholder}`;
+    if (link) return `${link}`;
+    return "";
+  }
+
   // Add profile image if available - treated as absolute positioned element
   let headerStartY = y; // Save starting position for header
-  
+
   // Use ImageHandler module to add image to PDF
   const imageInfo = addImageToPDF(doc, marginLeft, y);
   const imageWidth = imageInfo.width;
   const imageHeight = imageInfo.height;
+  const ImageMarginRight = marginLeft + imageWidth + padding + lineHeight / 2; // Margin after image
 
-  // Personal Information - always centered on full page width (ignore image)
-  doc.setFont('NotoSans', 'bold');
-  doc.setFontSize(16);
-  const name = obj.name;
-  
-  // Always center on full page width
-  doc.text(name || "Your Name", midPage, y, { align: 'center' });
-  
-  // Move to next line for personal info
-  let personalInfoY = y + lineHeight + padding;
-
-  doc.setFont("NotoSans", "normal");
-  doc.setFontSize(10);
   const personalInfo = getPersonalInfoFromObj(obj);
   const personalInfo2 = getPersonalInfo2FromObj(obj);
-  
-  // Personal info always centered on full page width (ignore image)
-  if (personalInfo) {
-    const fullLength = doc.getStringUnitWidth(personalInfo) * 10;
+  let personalInfoY = y + lineHeight + padding;
 
-    let location = obj.location;
-    let email = obj.email;
-    let linkedin = obj.linkedin;
-    let github = obj.github;
-    let website = obj.website;
 
-    // location
-    let content = location ? `${location}` : "";
-    let temp = location ? `${location}` : "";
-    let tempLength = doc.getStringUnitWidth(temp) * 10;
-    doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
-    // email
-    content = temp && email ? ` • ${email}` : email ? `${email}` : "";
-    temp += temp && email ? ` • ${email}` : email ? `${email}` : "";
-    tempLength = doc.getStringUnitWidth(temp) * 10;
-    doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
+  if (hasImage()) {
+    // Personal Information 
+    doc.setFont("NotoSans", "bold");
+    doc.setFontSize(16);
+    const name = obj.name;
 
-    // linkedin
-    content =
-      temp && linkedin ? ` • ${linkedin}` : linkedin ? `${linkedin}` : "";
-    temp += temp && linkedin ? ` • ${linkedin}` : linkedin ? `${linkedin}` : "";
-    tempLength = doc.getStringUnitWidth(temp) * 10;
-    if (content.includes('https://') || content.includes('www.')) {
-      doc.setTextColor('#115bca');
-      doc.setDrawColor('#115bca');
-      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
-      const textWidth = doc.getStringUnitWidth(linkedin) * 10;
-      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, personalInfoY, midPage - (fullLength / 2 - tempLength), personalInfoY);
-      doc.setTextColor('#000000');
-      doc.setDrawColor('#000000');
+    // Place name at right side of the image
+    doc.text(name || "Your Name", ImageMarginRight, y);
+
+    // Move to next line for personal info
+    personalInfoY = y + lineHeight + padding;
+    doc.setFont("NotoSans", "normal");
+    doc.setFontSize(10);
+
+    // Place Personal Info right of the image
+    if (personalInfo) {
+      let location = obj.location;
+      let email = obj.email;
+      let phone = obj.phone;
+
+      // location
+      let content = location ? `${location}` : "";
+      let temp = location ? `${location}` : "";
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, ImageMarginRight, personalInfoY);
+
+      // email
+      content = temp && email ? `${deliminator}${email}` : email ? `${email}` : "";
+      temp += temp && email ? `${deliminator}${email}` : email ? `${email}` : "";
+      doc.text(content, ImageMarginRight + tempLength, personalInfoY);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      // phone
+      content = temp && phone ? `${deliminator}${phone}` : phone ? `${phone}` : "";
+      temp += temp && phone ? `${deliminator}${phone}` : phone ? `${phone}` : "";
+      doc.text(content, ImageMarginRight + tempLength, personalInfoY);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      // console.log(fullLength - tempLength, fullLength, tempLength);
+
+      personalInfoY += lineHeight + padding;
     }
-    else
-      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
 
-    console.log(fullLength - tempLength, fullLength, tempLength);
+    if (personalInfo2) {
+      let github = obj.github;
+      let website = obj.website;
+      let linkedin = obj.linkedin;
+      let linkedin_placeholder = obj.linkedin_placeholder;
+      let github_placeholder = obj.github_placeholder;
+      let website_placeholder = obj.website_placeholder;
 
-    personalInfoY += lineHeight + padding;
+      // github
+      let content = formatOutput("", github_placeholder, github);
+      let temp = formatOutput("", github_placeholder, github);
+      let rawText = formatOutputNoDot(github_placeholder, github);
+      console.log("github", content, "|", temp);
+      if (github.includes("https://") || github.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          rawText,
+          ImageMarginRight,
+          personalInfoY,
+          { url: github }
+        );
+        const textWidth = doc.getStringUnitWidth(rawText) * 10;
+        doc.line(
+          ImageMarginRight,
+          personalInfoY,
+          ImageMarginRight + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight,
+          personalInfoY,
+        );
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+
+
+      // website
+      content = formatOutput(temp, website_placeholder, website);
+      temp += formatOutput(temp, website_placeholder, website);
+      rawText = formatOutputNoDot(website_placeholder, website);
+      if (website.includes("https://") || website.includes("www.")) {
+        doc.text(
+          deliminator,
+          ImageMarginRight + tempLength,
+          personalInfoY
+        )
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          rawText,
+          ImageMarginRight + tempLength + deliminatorLength,
+          personalInfoY,
+          { url: website }
+        );
+        const textWidth = doc.getStringUnitWidth(rawText) * 10;
+        doc.line(
+          ImageMarginRight + tempLength + deliminatorLength,
+          personalInfoY,
+          ImageMarginRight + tempLength + deliminatorLength + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY,
+        );
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      // linkedin
+      content = formatOutput(temp, linkedin_placeholder, linkedin);
+      temp += formatOutput(temp, linkedin_placeholder, linkedin);
+      rawText = formatOutputNoDot(linkedin_placeholder, linkedin);
+      // console.log("linkedin", content, "|", temp);
+      if (linkedin.includes("https://") || linkedin.includes("www.")) {
+        doc.text(
+          deliminator,
+          ImageMarginRight + tempLength,
+          personalInfoY
+        )
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          rawText,
+          ImageMarginRight + tempLength + deliminatorLength,
+          personalInfoY,
+          { url: linkedin }
+        );
+        const textWidth = doc.getStringUnitWidth(rawText) * 10;
+        doc.line(
+          ImageMarginRight + tempLength + deliminatorLength,
+          personalInfoY,
+          ImageMarginRight + tempLength + deliminatorLength + textWidth,
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          ImageMarginRight + tempLength,
+          personalInfoY
+        );
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+
+      personalInfoY += lineHeight + padding;
+    }
+  }
+  else {
+    // Personal Information 
+    doc.setFont("NotoSans", "bold");
+    doc.setFontSize(16);
+    const name = obj.name;
+
+    // Center name at mid-page
+    doc.text(name || "Your Name", midPage, y, { align: "center" });
+
+    // Move to next line for personal info
+    personalInfoY = y + lineHeight + padding;
+    doc.setFont("NotoSans", "normal");
+    doc.setFontSize(10);
+
+    // centered Personal Info
+    if (personalInfo) {
+      const fullLength = doc.getStringUnitWidth(personalInfo) * 10;
+
+      let location = obj.location;
+      let email = obj.email;
+      let phone = obj.phone;
+
+      // location
+      let content = location ? `${location}` : "";
+      let temp = location ? `${location}` : "";
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
+        align: "right",
+      });
+
+      // email
+      content = temp && email ? `${deliminator}${email}` : email ? `${email}` : "";
+      temp += temp && email ? `${deliminator}${email}` : email ? `${email}` : "";
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
+        align: "right",
+      });
+
+      // phone
+      content = temp && phone ? `${deliminator}${phone}` : phone ? `${phone}` : "";
+      temp += temp && phone ? `${deliminator}${phone}` : phone ? `${phone}` : "";
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, {
+        align: "right",
+      });
+
+      personalInfoY += lineHeight + padding;
+    }
+
+    if (personalInfo2) {
+      const fullLength = doc.getStringUnitWidth(personalInfo2) * 10;
+
+      let github = obj.github;
+      let website = obj.website;
+      let linkedin = obj.linkedin;
+      let linkedin_placeholder = obj.linkedin_placeholder;
+      let github_placeholder = obj.github_placeholder;
+      let website_placeholder = obj.website_placeholder;
+
+      // github
+      let content = formatOutput("", github_placeholder, github);
+      let temp = formatOutput("", github_placeholder, github);
+      let rawText = formatOutputNoDot(github_placeholder, github);
+      let tempLength = doc.getStringUnitWidth(temp) * 10;
+      let rawLength = doc.getStringUnitWidth(rawText) * 10;
+      console.log("github", content, "|", temp);
+      if (github.includes("https://") || github.includes("www.")) {
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          rawText,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: github, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(rawText) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      // website
+      content = formatOutput(temp, website_placeholder, website);
+      temp += formatOutput(temp, website_placeholder, website);
+      rawText = formatOutputNoDot(website_placeholder, website);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      rawLength = doc.getStringUnitWidth(rawText) * 10;
+      if (website.includes("https://") || website.includes("www.")) {
+        doc.text(
+          deliminator,
+          midPage - (fullLength / 2 - tempLength + rawLength),
+          personalInfoY,
+          { align: "right" }
+        )
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          rawText,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: website, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(rawText) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      // linkedin
+      content = formatOutput(temp, linkedin_placeholder, linkedin);
+      temp += formatOutput(temp, linkedin_placeholder, linkedin);
+      rawText = formatOutputNoDot(linkedin_placeholder, linkedin);
+      // console.log("linkedin", content, "|", temp);
+      tempLength = doc.getStringUnitWidth(temp) * 10;
+      rawLength = doc.getStringUnitWidth(rawText) * 10;
+      if (linkedin.includes("https://") || linkedin.includes("www.")) {
+        doc.text(
+          deliminator,
+          midPage - (fullLength / 2 - tempLength + rawLength),
+          personalInfoY,
+          { align: "right" }
+        )
+        doc.setTextColor("#115bca");
+        doc.setDrawColor("#115bca");
+        doc.textWithLink(
+          rawText,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { url: linkedin, align: "right" }
+        );
+        const textWidth = doc.getStringUnitWidth(rawText) * 10;
+        doc.line(
+          midPage - (fullLength / 2 - tempLength) - textWidth,
+          personalInfoY,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY
+        );
+        doc.setTextColor("#000000");
+        doc.setDrawColor("#000000");
+      } else
+        doc.text(
+          content,
+          midPage - (fullLength / 2 - tempLength),
+          personalInfoY,
+          { align: "right" }
+        );
+
+      console.log(fullLength - tempLength, fullLength, tempLength, temp);
+
+      personalInfoY += lineHeight + padding;
+    }
   }
 
-  if (personalInfo2) {
-    const fullLength = doc.getStringUnitWidth(personalInfo2) * 10;
-
-    let github = obj.github;
-    let website = obj.website;
-
-    // github
-    let content = github ? `${github}` : "";
-    let temp = github ? `${github}` : "";
-    let tempLength = doc.getStringUnitWidth(temp) * 10;
-    if (content.includes('https://') || content.includes('www.')) {
-      doc.setTextColor('#115bca');
-      doc.setDrawColor('#115bca');
-      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
-      const textWidth = doc.getStringUnitWidth(github) * 10;
-      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, personalInfoY, midPage - (fullLength / 2 - tempLength), personalInfoY);
-      doc.setTextColor('#000000');
-      doc.setDrawColor('#000000');
-    }
-    else
-      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
-
-    // website
-    content = temp && website ? ` • ${website}` : website ? `${website}` : "";
-    temp += temp && website ? ` • ${website}` : website ? `${website}` : "";
-    tempLength = doc.getStringUnitWidth(temp) * 10;
-    if (content.includes('https://') || content.includes('www.')) {
-      doc.setTextColor('#115bca');
-      doc.setDrawColor('#115bca');
-      doc.textWithLink(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
-      const textWidth = doc.getStringUnitWidth(website) * 10;
-      doc.line(midPage - (fullLength / 2 - tempLength) - textWidth, personalInfoY, midPage - (fullLength / 2 - tempLength), personalInfoY);
-      doc.setTextColor('#000000');
-      doc.setDrawColor('#000000');
-    }
-    else
-      doc.text(content, midPage - (fullLength / 2 - tempLength), personalInfoY, { align: 'right' });
-
-    personalInfoY += lineHeight + padding;
-  }
-  
   // If no personal info was displayed, set personalInfoY to continue from name
   if (!personalInfo && !personalInfo2) {
     personalInfoY = headerStartY + lineHeight + padding;
   }
-  
+
   // Set y position to continue below the header (image + personal info)
   if (hasImage()) {
-    const imageBottom = getImageBottomPosition(headerStartY, imageHeight, padding);
+    const imageBottom = getImageBottomPosition(
+      headerStartY,
+      imageHeight,
+      lineHeight + padding
+    );
+    console.log("imageBottom", imageBottom, "|", personalInfoY);
     y = Math.max(personalInfoY, imageBottom);
   } else {
     y = personalInfoY;
@@ -566,12 +834,15 @@ function generatePDF(obj, save = false) {
     doc.setFont("NotoSans", "normal");
     doc.setFontSize(10);
     const summaryLines = doc.splitTextToSize(summary, 500);
-    doc.text(summary, marginLeft, y, {align: "justify", maxWidth: 500, lineHeightFactor: 1.5});
+    doc.text(summary, marginLeft, y, {
+      align: "justify",
+      maxWidth: 500,
+      lineHeightFactor: 1.5,
+    });
     for (let i = 0; i < summaryLines.length; i++) {
       // doc.text(summaryLines[i], marginLeft, y, {align: "justify", maxWidth: 500});
       y += lineHeight;
-      if (i == summaryLines.length - 1)
-        y += 5;
+      if (i == summaryLines.length - 1) y += 5;
       checkAndAddPage();
     }
     // console.log(summaryLines)
@@ -599,10 +870,10 @@ function generatePDF(obj, save = false) {
         let temp = skill ? `**${skill.trim()}**` : "";
         temp +=
           temp && description
-            ? `, ${description.trim()}`
+            ? `: ${description.trim()}`
             : description
-            ? `${description.trim()}`
-            : "";
+              ? `${description.trim()}`
+              : "";
         let startX = marginLeft;
         temp.split("**").forEach((line, index) => {
           doc.setFont("NotoSans", "bold");
@@ -634,9 +905,9 @@ function generatePDF(obj, save = false) {
         // doc.setFont('NotoSans', 'normal');
         // doc.text(skill ? " : " + description : description, doc.getTextWidth(skill) + marginLeft, y);
 
-        if (index != skillsEntries.length - 1) y += lineHeight;
-        else y += lineHeight + padding;
-        checkAndAddPage();
+        y += lineHeight;
+        if (index != skillsEntries.length - 1 || y < marginBottom)
+          checkAndAddPage();
       });
     }
   }
@@ -654,7 +925,8 @@ function generatePDF(obj, save = false) {
     ) {
       doc.setFont("NotoSans", "bold");
       doc.setFontSize(14);
-      // y += lineHeight;
+      y += padding;
+      checkAndAddPage();
       doc.text("Experience", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -690,8 +962,8 @@ function generatePDF(obj, save = false) {
           temp && location
             ? ` - ${location.trim()}`
             : location
-            ? `${location.trim()}`
-            : "";
+              ? `${location.trim()}`
+              : "";
         doc.text(temp, marginLeft, y);
         y += lineHeight;
         checkAndAddPage();
@@ -701,14 +973,11 @@ function generatePDF(obj, save = false) {
           if (bullet.trim()) {
             const bulletLines = doc.splitTextToSize(bullet.trim(), 500);
             for (let i = 0; i < bulletLines.length; i++) {
-              if (i == 0)
-                doc.text("•      " + bulletLines[i], marginLeft, y);
-              else
-                doc.text("        " + bulletLines[i], marginLeft, y);
-              if (index != bullets.length) {
-                y += lineHeight;
+              if (i == 0) doc.text("•      " + bulletLines[i], marginLeft, y);
+              else doc.text("        " + bulletLines[i], marginLeft, y);
+              y += lineHeight;
+              if (index != bullets.length - 1 || y < marginBottom)
                 checkAndAddPage();
-              }
             }
           }
         });
@@ -727,6 +996,7 @@ function generatePDF(obj, save = false) {
       doc.setFont("NotoSans", "bold");
       doc.setFontSize(14);
       y += padding;
+      checkAndAddPage();
       doc.text("Projects", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -759,12 +1029,18 @@ function generatePDF(obj, save = false) {
           ) {
             y += lineHeight;
             checkAndAddPage();
-            doc.setTextColor('#115bca');
-            doc.setDrawColor('#115bca');
-            const projectLinkLines = doc.splitTextToSize(projectLink.trim(), 520);
+            doc.setTextColor("#115bca");
+            doc.setDrawColor("#115bca");
+            const projectLinkLines = doc.splitTextToSize(
+              projectLink.trim(),
+              520
+            );
             for (let i = 0; i < projectLinkLines.length; i++) {
-              doc.textWithLink(projectLinkLines[i], marginLeft, y, { align: 'left' });
-              const textWidth = doc.getStringUnitWidth(projectLinkLines[i]) * 10;
+              doc.textWithLink(projectLinkLines[i], marginLeft, y, {
+                align: "left",
+              });
+              const textWidth =
+                doc.getStringUnitWidth(projectLinkLines[i]) * 10;
               doc.line(marginLeft, y, marginLeft + textWidth, y);
               if (i != projectLinkLines.length - 1) {
                 y += lineHeight;
@@ -776,9 +1052,12 @@ function generatePDF(obj, save = false) {
           } else {
             y += lineHeight;
             checkAndAddPage();
-            const projectLinkLines = doc.splitTextToSize(projectLink.trim(), 520);
+            const projectLinkLines = doc.splitTextToSize(
+              projectLink.trim(),
+              520
+            );
             for (let i = 0; i < projectLinkLines.length; i++) {
-              doc.text(projectLinkLines[i], marginLeft, y, { align: 'left' });
+              doc.text(projectLinkLines[i], marginLeft, y, { align: "left" });
               if (i != projectLinkLines.length - 1) {
                 y += lineHeight;
                 checkAndAddPage();
@@ -797,14 +1076,11 @@ function generatePDF(obj, save = false) {
           if (bullet.trim()) {
             const bulletLines = doc.splitTextToSize(bullet.trim(), 500);
             for (let i = 0; i < bulletLines.length; i++) {
-              if (i == 0)
-                doc.text("•      " + bulletLines[i], marginLeft, y);
-              else
-                doc.text("        " + bulletLines[i], marginLeft, y);
-              if (index != bullets.length) {
-                y += lineHeight;
+              if (i == 0) doc.text("•      " + bulletLines[i], marginLeft, y);
+              else doc.text("        " + bulletLines[i], marginLeft, y);
+              y += lineHeight;
+              if (index != bullets.length - 1 || y < marginBottom)
                 checkAndAddPage();
-              }
             }
           }
         });
@@ -830,6 +1106,7 @@ function generatePDF(obj, save = false) {
       doc.setFont("NotoSans", "bold");
       doc.setFontSize(14);
       y += padding;
+      checkAndAddPage();
       doc.text("Education", marginLeft, y);
       doc.line(marginLeft, y + 5, marginRight, y + 5);
       y += lineHeight + padding;
@@ -871,9 +1148,70 @@ function generatePDF(obj, save = false) {
         temp += temp && gpa ? ` - ${gpa.trim()}` : gpa ? `${gpa.trim()}` : "";
         doc.text(temp, marginLeft, y);
 
-        if (index != educationEntries.length - 1) {
+        y += lineHeight;
+        if (index != educationEntries.length - 1 || y < marginBottom)
+          checkAndAddPage();
+      });
+    }
+  }
+
+  // Certifications Section
+  const certificateEntries = obj.certificates;
+  if (certificateEntries.length) {
+    if (
+      obj.certificates[0].certName ||
+      obj.certificates[0]["issuer/description"]
+    ) {
+      doc.setFont("NotoSans", "bold");
+      doc.setFontSize(14);
+      y += padding;
+      checkAndAddPage();
+      doc.text("Certificates", marginLeft, y);
+      doc.line(marginLeft, y + 5, marginRight, y + 5);
+      y += lineHeight + padding;
+      checkAndAddPage();
+
+      certificateEntries.forEach((entry, index) => {
+        // const fields = entry.querySelectorAll('input');
+        // const university = fields[0].value;
+        // const degree = fields[1].value;
+        // const gpa = fields[2].value;
+        // const graduationDate = fields[3].value;
+
+        const certName = entry.certName;
+        const issuer = entry["issuer/description"];
+        const certDate = entry.certDate;
+
+        doc.setFontSize(10);
+        let temp = certName ? `**${certName.trim()}**` : "";
+        // temp += temp && degree ? `| ${degree.trim()}` : degree ? `${degree.trim()}` : '';
+        // temp += temp && gpa ? ` - GPA: ${gpa.trim()}` : gpa ? `GPA: ${gpa.trim()}` : '';
+        let startX = marginLeft;
+        temp.split("**").forEach((line, index) => {
+          doc.setFont("NotoSans", "bold");
+          if (index % 2 === 0) {
+            doc.setFont("NotoSans", "normal");
+          }
+          doc.text(line, startX, y);
+          startX = startX + doc.getStringUnitWidth(line) * 10;
+        });
+
+        doc.setFont("NotoSans", "normal");
+        doc.text(certDate, marginRight, y, { align: "right" });
+        if (issuer || index != certificateEntries.length - 1) {
           y += lineHeight;
           checkAndAddPage();
+        }
+
+        // issuer/description
+        if (issuer) {
+          temp = issuer ? `${issuer.trim()}` : "";
+          doc.text(temp, marginLeft, y);
+
+          if (index != certificateEntries.length - 1) {
+            y += lineHeight;
+            checkAndAddPage();
+          }
         }
       });
     }
@@ -893,19 +1231,24 @@ function generatePDF(obj, save = false) {
 
 function downloadPDF() {
   const obj = getObject();
-  generatePDF(obj, true);
+  generatePDF(obj.cv, true);
 }
 
 function loadHtml(obj) {
   // const obj = getObject()
-  document.getElementById('name').value = obj.name;
-  document.getElementById('email').value = obj.email;
-  document.getElementById('location').value = obj.location;
-  document.getElementById('linkedin').value = obj.linkedin;
-  document.getElementById('github').value = obj.github;
-  document.getElementById('website').value = obj.website;
-  document.getElementById('summary').value = obj.summary;
-  
+  document.getElementById("name").value = obj.name;
+  document.getElementById("email").value = obj.email;
+  document.getElementById("phone").value = obj.phone;
+  document.getElementById("location").value = obj.location;
+  document.getElementById("linkedin").value = obj.linkedin;
+  document.getElementById("github").value = obj.github;
+  document.getElementById("website").value = obj.website;
+  document.getElementById("summary").value = obj.summary;
+
+  document.getElementById("linkedin_placeholder").value = obj.linkedin_placeholder || "";
+  document.getElementById("github_placeholder").value = obj.github_placeholder || "";
+  document.getElementById("website_placeholder").value = obj.website_placeholder || "";
+
   // Load profile image using ImageHandler module
   loadImageFromData(obj);
 
@@ -915,7 +1258,7 @@ function loadHtml(obj) {
     if (index != 0) entry.remove();
   });
 
-  const skills = obj.skills;
+  const skills = obj.skills || [];
   skills.map((skill, index) => {
     if (index == 0) {
       const inputs = document
@@ -943,7 +1286,7 @@ function loadHtml(obj) {
     if (index != 0) entry.remove();
   });
 
-  const exps = obj.experiences;
+  const exps = obj.experiences || [];
   exps.map((exp, index) => {
     if (index == 0) {
       const inputs = document
@@ -977,7 +1320,7 @@ function loadHtml(obj) {
     if (index != 0) entry.remove();
   });
 
-  const projs = obj.projects;
+  const projs = obj.projects || [];
   projs.map((proj, index) => {
     if (index == 0) {
       const inputs = document
@@ -1001,13 +1344,43 @@ function loadHtml(obj) {
     }
   });
 
+  // Delete all existing certificate entries
+  const certificateEntries = document.querySelectorAll(".certificate-entry");
+  certificateEntries.forEach((entry, index) => {
+    if (index != 0) entry.remove();
+  });
+
+  const certs = obj.certificates || [];
+  certs.map((cert, index) => {
+    if (index == 0) {
+      const inputs = document
+        .querySelector(".certificate-entry")
+        .querySelectorAll("input, textarea");
+      inputs[0].value = cert.certName;
+      inputs[1].value = cert["issuer/description"];
+      inputs[2].value = cert.certDate;
+    } else {
+      const newEntry = document.createElement("div");
+      newEntry.className = "certificate-entry space-y-4 mt-6";
+      newEntry.innerHTML = `
+      <input type="text" placeholder="Certification Name" class="w-full p-2 border rounded" value="${cert.certName}">
+      <input type="text" placeholder="Issuer/Description" class="w-full p-2 border rounded" value="${cert['issuer/description']}">
+      <input type="text" placeholder="Certification Date" class="w-full p-2 border rounded" value="${cert.certDate}">
+      <button class="delete-btn btn btn-error text-white px-2 py-1 rounded mt-2" data-container="certificate-fields">
+        Delete
+      </button>
+    `;
+      document.getElementById("certificate-fields").appendChild(newEntry);
+    }
+  });
+
   // Delete all existing education entries
   const educationEntries = document.querySelectorAll(".education-entry");
   educationEntries.forEach((entry, index) => {
     if (index != 0) entry.remove();
   });
 
-  const edus = obj.educations;
+  const edus = obj.educations || [];
   edus.map((edu, index) => {
     if (index == 0) {
       const inputs = document
@@ -1032,11 +1405,12 @@ function loadHtml(obj) {
       document.getElementById("education-fields").appendChild(newEntry);
     }
   });
-  
+
   // Update preview after loading data
   AutoUpdate();
 }
 
+// Handle save file json upload
 inputEle.onchange = async function () {
   document.querySelector(".err").innerText = "";
   if (inputEle.files.length == 0) return;
@@ -1047,7 +1421,8 @@ inputEle.onchange = async function () {
     return;
   }
   const obj = JSON.parse(await inputEle.files[0].text());
-  loadHtml(obj);
+  loadHtml(obj.cv);
+  loadCoverLetter(obj.coverLetter);
   // generatePDF will be called by AutoUpdate in loadHtml
   console.log(obj);
 };
@@ -1067,24 +1442,72 @@ radios[1].addEventListener("change", () => {
 // Initialize image handler
 initializeImageHandler();
 
+// initialize personal profile handler
+initializeProfileHandler();
+
+function profileEventListener() {
+  document.getElementById("save-profile").addEventListener("click", () => {
+    const profile_idx = parseInt(document.getElementById("profile-select").value);
+    console.log("profile_idx: ", profile_idx);
+    const obj = getObject();
+    obj["cv"]['language'] = languageSelect.value;
+    const temp_obj = mapObject_profile(obj);
+    // console.log(temp_obj);
+    saveProfileToStorage(profile_idx, temp_obj);
+  });
+  document.getElementById("load-profile").addEventListener("click", () => {
+    let profile_idx = parseInt(document.getElementById("profile-select").value);
+    profile_idx = profile_idx < 0 ? 0 : profile_idx;
+    const obj_cv = getObject();
+    const obj_profile = loadProfile(profile_idx);
+    console.log(obj_cv, obj_profile);
+    const obj_final = mapObject_cv(obj_profile, obj_cv);
+    loadHtml(obj_final.cv);
+  })
+  document.getElementById("delete-profile").addEventListener("click", () => {
+    const profile_idx = parseInt(document.getElementById("profile-select").value);
+    deleteProfile(profile_idx);
+  })
+}
+profileEventListener();
+
 // Initialize all event listeners for buttons
 function initializeEventListeners() {
   // Main action buttons
-  document.getElementById('update-btn')?.addEventListener('click', AutoUpdate);
-  document.getElementById('download-pdf-btn')?.addEventListener('click', downloadPDF);
-  document.getElementById('download-json-btn')?.addEventListener('click', downloadJson);
-  document.getElementById('generate-ai-btn')?.addEventListener('click', generateAI);
-  
+  document
+    .getElementById("update-btn")
+    ?.addEventListener("click", AutoUpdate);
+  document
+    .getElementById("download-pdf-btn")
+    ?.addEventListener("click", downloadPDF);
+  document
+    .getElementById("download-json-btn")
+    ?.addEventListener("click", downloadJson);
+  document
+    .getElementById("generate-ai-btn")
+    ?.addEventListener("click", generateAI);
+
   // Add section buttons
-  document.getElementById('add-skill-btn')?.addEventListener('click', addSkill);
-  document.getElementById('add-experience-btn')?.addEventListener('click', addExperience);
-  document.getElementById('add-project-btn')?.addEventListener('click', addProject);
-  document.getElementById('add-education-btn')?.addEventListener('click', addEducation);
-  
+  document
+    .getElementById("add-skill-btn")
+    ?.addEventListener("click", addSkill);
+  document
+    .getElementById("add-experience-btn")
+    ?.addEventListener("click", addExperience);
+  document
+    .getElementById("add-project-btn")
+    ?.addEventListener("click", addProject);
+  document
+    .getElementById("add-education-btn")
+    ?.addEventListener("click", addEducation);
+  document
+    .getElementById("add-certificate-btn")
+    ?.addEventListener("click", addCertificate);
+
   // Delete buttons event delegation
-  document.body.addEventListener('click', function(e) {
-    if (e.target.classList.contains('delete-btn')) {
-      const container = e.target.getAttribute('data-container');
+  document.body.addEventListener("click", function (e) {
+    if (e.target.classList.contains("delete-btn")) {
+      const container = e.target.getAttribute("data-container");
       deleteBlock(e.target, container);
     }
   });
@@ -1093,204 +1516,345 @@ function initializeEventListeners() {
 // Initialize event listeners when DOM is loaded
 initializeEventListeners();
 
-const INSprompt = `Instruction Prompt:
+let INSprompt = "";
 
-Be in JSON format matching the schema below.
-
-Translate all fields into the specified language, using natural, real-life phrasing and tone appropriate to professional job applications.
-
-The cover letter should:
-
-Be role-specific and company-aware.
-
-Highlight relevant experience, skills, and achievements aligned with the job description.
-
-Follow a standard business letter structure (header, greeting, intro, body, closing, sign-off).
-
-Sound authentic, enthusiastic, and tailored to the job.
-
-2. Return Format
-Please return a single JSON object with the following structure. Every text field must be in the requested language:
-
-{
-  "cv": {
-    "name": "",  
-    "email": "",  
-    "location": "",  
-    "linkedin": "",  
-    "github": "",  
-    "website": "",  
-    "summary": "",  
-    "experiences": [  
-      {  
-        "position": "",  
-        "company": "",  
-        "location": "",  
-        "dates": "",  
-        "bullets": []  
-      }  
-    ],  
-    "educations": [  
-      {  
-        "university": "",  
-        "degree": "",  
-        "gpa": "",  
-        "graduationDate": ""  
-      }  
-    ],  
-    "projects": [  
-      {  
-        "projectName": "",  
-        "projectLink": "",  
-        "bullets": []  
-      }  
-    ],  
-    "skills": [  
-      {  
-        "skill": "",  
-        "description": ""  
-      }  
-    ]
-  },
-  "coverLetter": {
-    "header": {
-      "name": "",
-      "email": "",
-      "phone": "",
-      "location": "",
-      "date": "",
-      "recipientName": "",
-      "recipientTitle": "",
-      "companyName": "",
-      "companyAddress": ""
-    },
-    "greeting": "",
-    "openingParagraph": "",
-    "bodyParagraphs": [],
-    "closingParagraph": "",
-    "signOff": ""
-  }
+try {
+  INSprompt = await fetch("instruction.txt").then((response) =>
+    response.text()
+  );
+  console.log("fetch INSprompt successfully");
 }
-3. Warnings & Requirements
-For both CV and Cover Letter:
-Use realistic, natural-sounding phrasing in the target language.
-
-Avoid filler or clichés; focus on clear, impactful, context-appropriate writing.
-
-Do not fabricate irrelevant fluff; enrich only with plausible, aligned details.
-
-Leave fields blank if data is not provided and cannot be inferred.
-
-For CV:
-Only include "summary" if it directly connects with the job.
-
-Use strong past-tense action verbs to start experience/project bullets.
-
-Integrate technologies and keywords from the job description organically.
-
-Ensure concise, recruiter-friendly formatting.
-
-No GPA unless it's provided and strong.
-
-No tutorial/sample projects—only significant, real ones.
-
-Group skills meaningfully; do not list generic languages endlessly.
-
-For Cover Letter:
-Follow a standard structure:
-
-Header (contact info, date, recipient, company)
-
-Greeting (personalized if possible)
-
-Opening Paragraph (interest in role & company)
-
-Body Paragraph(s) (highlight achievements relevant to the job)
-
-Closing Paragraph (reaffirm interest & value)
-
-Sign-off
-
-Reference the job title and company explicitly.
-
-Personalize where possible using job/company insights.
-
-Ensure tone is enthusiastic, confident, and professional.
-
-Avoid repeating CV verbatim—expand or add narrative where helpful.
-
-4. Context
-You will receive a JSON input structured like this:
-
-{
-  "Job-description": "<full job posting>",
-  "user-information": "<optional CV-like content or freeform text>",
-  "language": "<language code, e.g., 'english', 'vietnamese'>"
+catch (e) {
+  console.warn("fetch INSprompt failed");
+  console.warn(e)
 }
-Please:
 
-Translate all generated content (CV + cover letter) into the specified language.
-
-Invent or infer realistic details only if the user's data is missing or insufficient.
-
-Prioritize relevance, clarity, and ATS optimization.
-
-Ensure cover letter does not exceed 350 words unless the job clearly favors a detailed narrative.
-`;
 
 async function generateAI() {
   const JD = document.getElementById("JD").value;
   const yourself = document.getElementById("yourself").value;
-  const language = document.getElementById("language").value;
+  const language = languageSelect.value;
   const error = document.querySelector("#AI-error");
   const aiLoader = document.querySelector("#AiLoader");
+  const MODEL_ID = "gemini-flash-lite-latest"
+  const GENERATE_CONTENT_API = "generateContent"
   error.innerText = "";
   if (!JD) {
     error.innerText = "Job Description is required";
     return;
   }
   try {
-    aiLoader.classList.replace('hidden', 'flex');
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
+    aiLoader.classList.replace("hidden", "flex");
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:${GENERATE_CONTENT_API}?key=${GEMINI_API_KEY}`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer LOOK FOR KEY IN key.txt`
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        "model": `deepseek/deepseek-chat-v3-0324:free`,
-        "response_format": {
-          "type": "json_object"
-        },
-        // "private": true,
-        // "reasoning_effort": "medium",
-        "messages": [
-          {
-            "role": "system",
-            "content": INSprompt
+      body: JSON.stringify(
+        {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": JSON.stringify({
+                    "Job-description": JD,
+                    "user-information": yourself,
+                    "translate-to-language": language,
+                    today: new Date().toDateString(),
+                  })
+                },
+              ]
+            },
+          ],
+          "generationConfig": {
+            "thinkingConfig": {
+              "thinkingBudget": -1,
+            },
+            "responseMimeType": "application/json",
+            "responseSchema": {
+              "type": "object",
+              "properties": {
+                "cv": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "linkedin": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "github": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "website": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "experiences": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "position": {
+                            "type": "string"
+                          },
+                          "company": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "string"
+                          },
+                          "dates": {
+                            "type": "string"
+                          },
+                          "bullets": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "propertyOrdering": [
+                          "position",
+                          "company",
+                          "location",
+                          "dates",
+                          "bullets"
+                        ]
+                      }
+                    },
+                    "educations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "university": {
+                            "type": "string"
+                          },
+                          "degree": {
+                            "type": "string"
+                          },
+                          "gpa": {
+                            "type": "string"
+                          },
+                          "graduationDate": {
+                            "type": "string"
+                          }
+                        },
+                        "propertyOrdering": [
+                          "university",
+                          "degree",
+                          "gpa",
+                          "graduationDate"
+                        ]
+                      }
+                    },
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "projectName": {
+                            "type": "string"
+                          },
+                          "projectLink": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "bullets": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "propertyOrdering": [
+                          "projectName",
+                          "projectLink",
+                          "bullets"
+                        ]
+                      }
+                    },
+                    "skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "skill": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          }
+                        },
+                        "propertyOrdering": [
+                          "skill",
+                          "description"
+                        ]
+                      }
+                    },
+                    "certificates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "certName": {
+                            "type": "string"
+                          },
+                          "issuer/description": {
+                            "type": "string"
+                          },
+                          "certDate": {
+                            "type": "string"
+                          }
+                        },
+                        "propertyOrdering": [
+                          "certName",
+                          "issuer/description",
+                          "certDate"
+                        ]
+                      }
+                    }
+                  },
+                  "propertyOrdering": [
+                    "name",
+                    "email",
+                    "phone",
+                    "location",
+                    "linkedin",
+                    "github",
+                    "website",
+                    "summary",
+                    "experiences",
+                    "educations",
+                    "projects",
+                    "skills",
+                    "certificates"
+                  ]
+                },
+                "coverLetter": {
+                  "type": "object",
+                  "properties": {
+                    "header": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "location": {
+                          "type": "string"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "recipientName": {
+                          "type": "string"
+                        },
+                        "recipientTitle": {
+                          "type": "string"
+                        },
+                        "companyName": {
+                          "type": "string"
+                        },
+                        "companyAddress": {
+                          "type": "string"
+                        }
+                      },
+                      "propertyOrdering": [
+                        "name",
+                        "email",
+                        "phone",
+                        "location",
+                        "date",
+                        "recipientName",
+                        "recipientTitle",
+                        "companyName",
+                        "companyAddress"
+                      ]
+                    },
+                    "greeting": {
+                      "type": "string"
+                    },
+                    "openingParagraph": {
+                      "type": "string"
+                    },
+                    "bodyParagraphs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "closingParagraph": {
+                      "type": "string"
+                    },
+                    "signOff": {
+                      "type": "string"
+                    }
+                  },
+                  "propertyOrdering": [
+                    "header",
+                    "greeting",
+                    "openingParagraph",
+                    "bodyParagraphs",
+                    "closingParagraph",
+                    "signOff"
+                  ]
+                }
+              },
+              "propertyOrdering": [
+                "cv",
+                "coverLetter"
+              ]
+            },
           },
-          {
-            role: "user",
-            content: JSON.stringify({
-              "Job-description": JD,
-              "user-information": yourself,
-              language: language,
-            }),
+          "system_instruction": {
+            "parts": [
+              {
+                "text": INSprompt
+              }
+            ]
           },
-        ],
-      })
+        }
+      ),
     });
-    const json = await res.json().then(res => JSON.parse(res.choices[0].message.content));
+    const json = await res.json().then(res => JSON.parse(res.candidates[0].content.parts[0].text));
     // console.log(typeof(json))
     const cv = json.cv;
     const coverLetter = json.coverLetter;
+    if (coverLetter) {
+      CoverLetter_Obj = coverLetter;
+    }
     cv.experiences.map((value, index) => {
       // let ex_temp = ''
       // json.experiences[index]['bullets'].map((value2, index2) => {
       //   ex_temp += value2 + '\n'
       // })
       // json.experiences[index]['bullets'] = ex_temp
-      cv.experiences[index]['bullets'] = cv.experiences[index]['bullets'].join('\n');
+      cv.experiences[index]["bullets"] =
+        cv.experiences[index]["bullets"].join("\n");
     });
     cv.projects.map((value, index) => {
       // let pr_temp = ''
@@ -1298,7 +1862,7 @@ async function generateAI() {
       //   pr_temp += value2 + '\n'
       // })
       // json.projects[index]['bullets'] = pr_temp
-      cv.projects[index]['bullets'] = cv.projects[index]['bullets'].join('\n');
+      cv.projects[index]["bullets"] = cv.projects[index]["bullets"].join("\n");
     });
     console.log(json);
     loadHtml(cv);
@@ -1344,9 +1908,7 @@ function loadCoverLetter(coverLetter) {
     header.phone,
     header.email,
     header.date,
-    header.recipientName
-      ? `Dear ${header.recipientName},`
-      : greeting || "Dear Hiring Manager,",
+    greeting,
   ];
 
   // Format body paragraphs with line breaks between each
